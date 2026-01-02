@@ -395,43 +395,43 @@
 </head>
 <body>
   <header>
-    <h1>🖨️ QR Code Generator</h1>
-    <p class="subtitle" id="headerSubtitle">Δημιουργήστε QR codes για τα παιχνίδια φυσικής σας</p>
+    <h1>ðŸ–¨ï¸ QR Code Generator</h1>
+    <p class="subtitle" id="headerSubtitle">Î”Î·Î¼Î¹Î¿Ï…ÏÎ³Î®ÏƒÏ„Îµ QR codes Î³Î¹Î± Ï„Î± Ï€Î±Î¹Ï‡Î½Î¯Î´Î¹Î± Ï†Ï…ÏƒÎ¹ÎºÎ®Ï‚ ÏƒÎ±Ï‚</p>
   </header>
 
   <!-- Setup Panel -->
   <div class="setup-panel no-print">
-    <h2>⚙️ <span id="setupTitle">Ρυθμίσεις</span></h2>
+    <h2>âš™ï¸ <span id="setupTitle">Î¡Ï…Î¸Î¼Î¯ÏƒÎµÎ¹Ï‚</span></h2>
     
     <!-- Language -->
     <div class="input-group">
-      <label id="langLabel">Γλώσσα εκτύπωσης:</label>
+      <label id="langLabel">Î“Î»ÏŽÏƒÏƒÎ± ÎµÎºÏ„ÏÏ€Ï‰ÏƒÎ·Ï‚:</label>
       <div class="lang-selector">
-        <button class="lang-btn active" data-lang="el" onclick="setLanguage('el')">🇬🇷 Ελληνικά</button>
-        <button class="lang-btn" data-lang="en" onclick="setLanguage('en')">🇬🇧 English</button>
-        <button class="lang-btn" data-lang="it" onclick="setLanguage('it')">🇮🇹 Italiano</button>
+        <button class="lang-btn active" data-lang="el" onclick="setLanguage('el')">ðŸ‡¬ðŸ‡· Î•Î»Î»Î·Î½Î¹ÎºÎ¬</button>
+        <button class="lang-btn" data-lang="en" onclick="setLanguage('en')">ðŸ‡¬ðŸ‡§ English</button>
+        <button class="lang-btn" data-lang="it" onclick="setLanguage('it')">ðŸ‡®ðŸ‡¹ Italiano</button>
       </div>
     </div>
 
     <!-- Base URL -->
     <div class="input-group">
-      <label for="baseUrl" id="urlLabel">Διεύθυνση βάσης (Base URL):</label>
+      <label for="baseUrl" id="urlLabel">Î”Î¹ÎµÏÎ¸Ï…Î½ÏƒÎ· Î²Î¬ÏƒÎ·Ï‚ (Base URL):</label>
       <input 
         type="url" 
         id="baseUrl" 
         placeholder="https://yourname.github.io/physics-games/"
         value="https://yourname.github.io/physics-games/"
       >
-      <small id="urlHelp">Αυτή είναι η διεύθυνση που φιλοξενούνται τα παιχνίδια σας</small>
+      <small id="urlHelp">Î‘Ï…Ï„Î® ÎµÎ¯Î½Î±Î¹ Î· Î´Î¹ÎµÏÎ¸Ï…Î½ÏƒÎ· Ï€Î¿Ï… Ï†Î¹Î»Î¿Î¾ÎµÎ½Î¿ÏÎ½Ï„Î±Î¹ Ï„Î± Ï€Î±Î¹Ï‡Î½Î¯Î´Î¹Î± ÏƒÎ±Ï‚</small>
     </div>
 
     <!-- Buttons -->
     <div class="btn-group">
       <button class="btn btn-primary" onclick="generateQRCodes()">
-        🔄 <span id="generateBtn">Δημιουργία QR Codes</span>
+        ðŸ”„ <span id="generateBtn">Î”Î·Î¼Î¹Î¿Ï…ÏÎ³Î¯Î± QR Codes</span>
       </button>
       <button class="btn btn-secondary" onclick="window.print()">
-        🖨️ <span id="printBtn">Εκτύπωση</span>
+        ðŸ–¨ï¸ <span id="printBtn">Î•ÎºÏ„ÏÏ€Ï‰ÏƒÎ·</span>
       </button>
     </div>
   </div>
@@ -443,13 +443,13 @@
 
   <!-- Instructions -->
   <div class="instructions no-print">
-    <h3>📋 <span id="instructionsTitle">Οδηγίες χρήσης</span></h3>
+    <h3>ðŸ“‹ <span id="instructionsTitle">ÎŸÎ´Î·Î³Î¯ÎµÏ‚ Ï‡ÏÎ®ÏƒÎ·Ï‚</span></h3>
     <ol id="instructionsList">
-      <li>Εισάγετε τη διεύθυνση όπου φιλοξενούνται τα παιχνίδια σας</li>
-      <li>Πατήστε "Δημιουργία QR Codes"</li>
-      <li>Πατήστε "Εκτύπωση" για να εκτυπώσετε σε A4</li>
-      <li>Κόψτε τα QR codes και μοιράστε τα στους μαθητές</li>
-      <li>Οι μαθητές σκανάρουν με το κινητό και παίζουν!</li>
+      <li>Î•Î¹ÏƒÎ¬Î³ÎµÏ„Îµ Ï„Î· Î´Î¹ÎµÏÎ¸Ï…Î½ÏƒÎ· ÏŒÏ€Î¿Ï… Ï†Î¹Î»Î¿Î¾ÎµÎ½Î¿ÏÎ½Ï„Î±Î¹ Ï„Î± Ï€Î±Î¹Ï‡Î½Î¯Î´Î¹Î± ÏƒÎ±Ï‚</li>
+      <li>Î Î±Ï„Î®ÏƒÏ„Îµ "Î”Î·Î¼Î¹Î¿Ï…ÏÎ³Î¯Î± QR Codes"</li>
+      <li>Î Î±Ï„Î®ÏƒÏ„Îµ "Î•ÎºÏ„ÏÏ€Ï‰ÏƒÎ·" Î³Î¹Î± Î½Î± ÎµÎºÏ„Ï…Ï€ÏŽÏƒÎµÏ„Îµ ÏƒÎµ A4</li>
+      <li>ÎšÏŒÏˆÏ„Îµ Ï„Î± QR codes ÎºÎ±Î¹ Î¼Î¿Î¹ÏÎ¬ÏƒÏ„Îµ Ï„Î± ÏƒÏ„Î¿Ï…Ï‚ Î¼Î±Î¸Î·Ï„Î­Ï‚</li>
+      <li>ÎŸÎ¹ Î¼Î±Î¸Î·Ï„Î­Ï‚ ÏƒÎºÎ±Î½Î¬ÏÎ¿Ï…Î½ Î¼Îµ Ï„Î¿ ÎºÎ¹Î½Î·Ï„ÏŒ ÎºÎ±Î¹ Ï€Î±Î¯Î¶Î¿Ï…Î½!</li>
     </ol>
   </div>
 
@@ -457,30 +457,30 @@
     /* ===== INTERNATIONALIZATION ===== */
     const I18N = {
       el: {
-        headerSubtitle: "Δημιουργήστε QR codes για τα παιχνίδια φυσικής σας",
-        setupTitle: "Ρυθμίσεις",
-        langLabel: "Γλώσσα εκτύπωσης:",
-        urlLabel: "Διεύθυνση βάσης (Base URL):",
-        urlHelp: "Αυτή είναι η διεύθυνση που φιλοξενούνται τα παιχνίδια σας",
-        generateBtn: "Δημιουργία QR Codes",
-        printBtn: "Εκτύπωση",
-        instructionsTitle: "Οδηγίες χρήσης",
+        headerSubtitle: "Î”Î·Î¼Î¹Î¿Ï…ÏÎ³Î®ÏƒÏ„Îµ QR codes Î³Î¹Î± Ï„Î± Ï€Î±Î¹Ï‡Î½Î¯Î´Î¹Î± Ï†Ï…ÏƒÎ¹ÎºÎ®Ï‚ ÏƒÎ±Ï‚",
+        setupTitle: "Î¡Ï…Î¸Î¼Î¯ÏƒÎµÎ¹Ï‚",
+        langLabel: "Î“Î»ÏŽÏƒÏƒÎ± ÎµÎºÏ„ÏÏ€Ï‰ÏƒÎ·Ï‚:",
+        urlLabel: "Î”Î¹ÎµÏÎ¸Ï…Î½ÏƒÎ· Î²Î¬ÏƒÎ·Ï‚ (Base URL):",
+        urlHelp: "Î‘Ï…Ï„Î® ÎµÎ¯Î½Î±Î¹ Î· Î´Î¹ÎµÏÎ¸Ï…Î½ÏƒÎ· Ï€Î¿Ï… Ï†Î¹Î»Î¿Î¾ÎµÎ½Î¿ÏÎ½Ï„Î±Î¹ Ï„Î± Ï€Î±Î¹Ï‡Î½Î¯Î´Î¹Î± ÏƒÎ±Ï‚",
+        generateBtn: "Î”Î·Î¼Î¹Î¿Ï…ÏÎ³Î¯Î± QR Codes",
+        printBtn: "Î•ÎºÏ„ÏÏ€Ï‰ÏƒÎ·",
+        instructionsTitle: "ÎŸÎ´Î·Î³Î¯ÎµÏ‚ Ï‡ÏÎ®ÏƒÎ·Ï‚",
         instructions: [
-          "Εισάγετε τη διεύθυνση όπου φιλοξενούνται τα παιχνίδια σας",
-          "Πατήστε \"Δημιουργία QR Codes\"",
-          "Πατήστε \"Εκτύπωση\" για να εκτυπώσετε σε A4",
-          "Κόψτε τα QR codes και μοιράστε τα στους μαθητές",
-          "Οι μαθητές σκανάρουν με το κινητό και παίζουν!"
+          "Î•Î¹ÏƒÎ¬Î³ÎµÏ„Îµ Ï„Î· Î´Î¹ÎµÏÎ¸Ï…Î½ÏƒÎ· ÏŒÏ€Î¿Ï… Ï†Î¹Î»Î¿Î¾ÎµÎ½Î¿ÏÎ½Ï„Î±Î¹ Ï„Î± Ï€Î±Î¹Ï‡Î½Î¯Î´Î¹Î± ÏƒÎ±Ï‚",
+          "Î Î±Ï„Î®ÏƒÏ„Îµ \"Î”Î·Î¼Î¹Î¿Ï…ÏÎ³Î¯Î± QR Codes\"",
+          "Î Î±Ï„Î®ÏƒÏ„Îµ \"Î•ÎºÏ„ÏÏ€Ï‰ÏƒÎ·\" Î³Î¹Î± Î½Î± ÎµÎºÏ„Ï…Ï€ÏŽÏƒÎµÏ„Îµ ÏƒÎµ A4",
+          "ÎšÏŒÏˆÏ„Îµ Ï„Î± QR codes ÎºÎ±Î¹ Î¼Î¿Î¹ÏÎ¬ÏƒÏ„Îµ Ï„Î± ÏƒÏ„Î¿Ï…Ï‚ Î¼Î±Î¸Î·Ï„Î­Ï‚",
+          "ÎŸÎ¹ Î¼Î±Î¸Î·Ï„Î­Ï‚ ÏƒÎºÎ±Î½Î¬ÏÎ¿Ï…Î½ Î¼Îµ Ï„Î¿ ÎºÎ¹Î½Î·Ï„ÏŒ ÎºÎ±Î¹ Ï€Î±Î¯Î¶Î¿Ï…Î½!"
         ],
-        comingSoon: "Σύντομα...",
-        scanToPlay: "Σκανάρετε για να παίξετε!",
+        comingSoon: "Î£ÏÎ½Ï„Î¿Î¼Î±...",
+        scanToPlay: "Î£ÎºÎ±Î½Î¬ÏÎµÏ„Îµ Î³Î¹Î± Î½Î± Ï€Î±Î¯Î¾ÎµÏ„Îµ!",
         // Categories
-        kinematics: "Κινηματική",
-        statics: "Στατική",
-        dynamics: "Δυναμική",
-        oscillations: "Ταλαντώσεις",
-        electricity: "Ηλεκτρισμός",
-        waves: "Κύματα"
+        kinematics: "ÎšÎ¹Î½Î·Î¼Î±Ï„Î¹ÎºÎ®",
+        statics: "Î£Ï„Î±Ï„Î¹ÎºÎ®",
+        dynamics: "Î”Ï…Î½Î±Î¼Î¹ÎºÎ®",
+        oscillations: "Î¤Î±Î»Î±Î½Ï„ÏŽÏƒÎµÎ¹Ï‚",
+        electricity: "Î—Î»ÎµÎºÏ„ÏÎ¹ÏƒÎ¼ÏŒÏ‚",
+        waves: "ÎšÏÎ¼Î±Ï„Î±"
       },
       en: {
         headerSubtitle: "Generate QR codes for your physics games",
@@ -512,7 +512,7 @@
         setupTitle: "Impostazioni",
         langLabel: "Lingua di stampa:",
         urlLabel: "URL di base:",
-        urlHelp: "Questo è l'indirizzo dove sono ospitati i tuoi giochi",
+        urlHelp: "Questo Ã¨ l'indirizzo dove sono ospitati i tuoi giochi",
         generateBtn: "Genera codici QR",
         printBtn: "Stampa",
         instructionsTitle: "Come usare",
@@ -529,7 +529,7 @@
         statics: "Statica",
         dynamics: "Dinamica",
         oscillations: "Oscillazioni",
-        electricity: "Elettricità",
+        electricity: "ElettricitÃ ",
         waves: "Onde"
       }
     };
@@ -538,88 +538,88 @@
     const GAMES = [
       {
         id: "launcher",
-        icon: "🎮",
+        icon: "ðŸŽ®",
         category: "all",
         filename: "index.html",
         formulas: [],
         isLauncher: true,
         title: {
-          el: "🏠 Αρχική Σελίδα",
-          en: "🏠 Home Page",
-          it: "🏠 Pagina Iniziale"
+          el: "ðŸ  Î‘ÏÏ‡Î¹ÎºÎ® Î£ÎµÎ»Î¯Î´Î±",
+          en: "ðŸ  Home Page",
+          it: "ðŸ  Pagina Iniziale"
         }
       },
       {
         id: "projectile-rescue",
-        icon: "🚀",
+        icon: "ðŸš€",
         category: "kinematics",
         filename: "projectile_rescue_lab_desktop_mobile_single_html_file.html",
-        formulas: ["x = v₀t", "y = ½gt²"],
+        formulas: ["x = vâ‚€t", "y = Â½gtÂ²"],
         title: {
-          el: "Επιχείρηση Διάσωσης",
+          el: "Î•Ï€Î¹Ï‡ÎµÎ¯ÏÎ·ÏƒÎ· Î”Î¹Î¬ÏƒÏ‰ÏƒÎ·Ï‚",
           en: "Rescue Mission",
           it: "Missione di Salvataggio"
         }
       },
       {
         id: "rescue-game-v2",
-        icon: "🎯",
+        icon: "ðŸŽ¯",
         category: "kinematics",
         filename: "02_rescue_game_FIXED_4.html",
-        formulas: ["x = v₀·t", "t = √(2h/g)"],
+        formulas: ["x = vâ‚€Â·t", "t = âˆš(2h/g)"],
         title: {
-          el: "Διάσωση v2.0",
+          el: "Î”Î¹Î¬ÏƒÏ‰ÏƒÎ· v2.0",
           en: "Rescue v2.0",
           it: "Salvataggio v2.0"
         }
       },
       {
         id: "bridge-equilibrium",
-        icon: "🌉",
+        icon: "ðŸŒ‰",
         category: "statics",
         filename: "03_bridge_equilibrium_game.html",
-        formulas: ["ΣF = 0", "Στ = 0"],
+        formulas: ["Î£F = 0", "Î£Ï„ = 0"],
         title: {
-          el: "Ισορροπία Γέφυρας",
+          el: "Î™ÏƒÎ¿ÏÏÎ¿Ï€Î¯Î± Î“Î­Ï†Ï…ÏÎ±Ï‚",
           en: "Bridge Equilibrium",
           it: "Equilibrio del Ponte"
         }
       },
       {
         id: "pendulum-lab",
-        icon: "🎢",
+        icon: "ðŸŽ¢",
         category: "oscillations",
         filename: null,
         comingSoon: true,
-        formulas: ["T = 2π√(L/g)"],
+        formulas: ["T = 2Ï€âˆš(L/g)"],
         title: {
-          el: "Εργαστήριο Εκκρεμούς",
+          el: "Î•ÏÎ³Î±ÏƒÏ„Î®ÏÎ¹Î¿ Î•ÎºÎºÏÎµÎ¼Î¿ÏÏ‚",
           en: "Pendulum Lab",
           it: "Laboratorio del Pendolo"
         }
       },
       {
         id: "ohms-challenge",
-        icon: "⚡",
+        icon: "âš¡",
         category: "electricity",
         filename: null,
         comingSoon: true,
         formulas: ["V = IR"],
         title: {
-          el: "Πρόκληση του Ohm",
+          el: "Î ÏÏŒÎºÎ»Î·ÏƒÎ· Ï„Î¿Ï… Ohm",
           en: "Ohm's Challenge",
           it: "La Sfida di Ohm"
         }
       },
       {
         id: "wave-surfer",
-        icon: "🌊",
+        icon: "ðŸŒŠ",
         category: "waves",
         filename: null,
         comingSoon: true,
-        formulas: ["v = λf"],
+        formulas: ["v = Î»f"],
         title: {
-          el: "Σέρφινγκ στα Κύματα",
+          el: "Î£Î­ÏÏ†Î¹Î½Î³Îº ÏƒÏ„Î± ÎšÏÎ¼Î±Ï„Î±",
           en: "Wave Surfer",
           it: "Surfista delle Onde"
         }
@@ -686,7 +686,7 @@
           ? `<div class="qr-formulas">${game.formulas.map(f => `<span class="formula-tag">${f}</span>`).join('')}</div>`
           : '';
         
-        const categoryText = game.isLauncher ? '📚 ' + (currentLang === 'el' ? 'Όλα τα Παιχνίδια' : currentLang === 'en' ? 'All Games' : 'Tutti i Giochi') : t(game.category);
+        const categoryText = game.isLauncher ? 'ðŸ“š ' + (currentLang === 'el' ? 'ÎŒÎ»Î± Ï„Î± Î Î±Î¹Ï‡Î½Î¯Î´Î¹Î±' : currentLang === 'en' ? 'All Games' : 'Tutti i Giochi') : t(game.category);
         
         card.innerHTML = `
           <div class="qr-icon">${game.icon}</div>
