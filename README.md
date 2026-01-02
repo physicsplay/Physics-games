@@ -1,5 +1,5 @@
 # Physics-games
-🎮 Interactive physics games for high school students. Learn kinematics, statics &amp; more through gameplay. No ads, no registration, GDPR compliant. 🇬🇷🇬🇧🇮🇹
+🎮 Interactive physics games for high school students. Learn kinematics, statics &amp; more through gameplay. No ads, no registration, GDPR compliant.(GR/EN/IT)
 # 🎮 Physics Games Lab
 
 **Interactive physics games for high school students**
@@ -185,7 +185,7 @@ Just include attribution to this project.
 
 ## 🙏 Acknowledgments
 
-- Created for physics education at **2nd Lyceum of Moschato**
+- Created for physics education at **2nd Lyceum of Moschato** & **L.S. R. Caccioppoli, Napoli**
 - Part of **Erasmus+ KA122** educational innovation project
 - Built with ❤️ for physics teachers and students everywhere
 
