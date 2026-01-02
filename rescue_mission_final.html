@@ -1,0 +1,1875 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Rescue Mission — Responsive (GR/EN/IT)</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+    background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);
+    overflow:hidden;
+    -webkit-tap-highlight-color:transparent;
+    color:#fff;
+  }
+  #layout{display:flex; gap:12px; padding:10px; justify-content:center; align-items:flex-start; flex-wrap:nowrap;}
+  #gameWrap{width:min(1200px, calc(100vw - 24px)); display:flex; flex-direction:column; gap:8px; align-items:center;}
+  #gameCanvas{
+    width:100%; height:auto; display:block;
+    background:linear-gradient(to bottom,#4A90E2 0%,#7B9EC9 40%,#2C5F7F 60%,#1A3A4F 100%);
+    box-shadow:0 15px 50px rgba(0,0,0,0.5);
+    border-radius:10px;
+    touch-action:none;
+  }
+  #sidePanel{width:390px; flex:0 0 auto; display:flex; flex-direction:column; gap:10px;}
+  .hud{
+    background:linear-gradient(135deg, rgba(30,30,30,0.95) 0%, rgba(60,60,60,0.95) 100%);
+    color:rgba(240,246,252,0.92);
+    padding:14px; border-radius:15px;
+    border:2px solid rgba(102,126,234,0.5);
+    box-shadow:0 8px 25px rgba(0,0,0,0.4);
+    font-size:14px; line-height:1.55;
+  }
+  .mini{font-size:12px;opacity:0.9}
+  .topRow{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:6px;}
+  .tinyBtn{
+    width:auto !important;
+    padding:8px 12px !important;
+    font-size:13px !important;
+    border-radius:999px !important;
+    white-space:nowrap;
+  }
+  .controlBlock{
+    margin-top:10px;
+    padding:10px;
+    border-radius:14px;
+    background:rgba(255,255,255,0.08);
+    border:1px solid rgba(255,255,255,0.14);
+  }
+  .controlTitle{font-weight:900;margin-bottom:8px}
+  .sliderRow{display:grid;grid-template-columns:1fr;gap:8px;margin-top:8px}
+  .sliderLabel{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:13px;opacity:0.95}
+  input[type="range"]{width:100%;accent-color:rgba(255,215,0,0.92)}
+  .btnRow{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+  .btnRow3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px}
+  button{
+    background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);
+    color:#fff; border:none;
+    padding:10px 14px;
+    border-radius:999px;
+    cursor:pointer; font-size:14px; font-weight:900;
+    box-shadow:0 4px 15px rgba(102,126,234,0.4);
+    transition:transform .15s, box-shadow .15s, opacity .15s;
+    width:100%;
+  }
+  button:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(102,126,234,0.55)}
+  button:active{transform:translateY(0)}
+  .status-line{margin-top:8px;font-size:13px;opacity:0.92}
+  .medal{font-size:24px;margin-top:8px}
+  .hint-box{
+    margin-top:10px; padding:10px;
+    border-radius:12px;
+    background:rgba(255,255,255,0.10);
+    border:1px solid rgba(255,255,255,0.18);
+    display:none;
+    line-height:1.45;
+    font-size:13px;
+    color:rgba(240,246,252,0.92);
+  }
+  .calcBox{
+    margin-top:10px;
+    padding:10px;
+    border-radius:12px;
+    background:rgba(0,0,0,0.18);
+    border:1px solid rgba(255,255,255,0.14);
+  }
+  .calcTitle{font-weight:900;margin-bottom:6px;color:rgba(255,215,0,0.92)}
+  .calcLine{font-size:13px; opacity:0.95; margin:4px 0}
+  .calcInputRow{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px;}
+  .calcInputRow input{
+    width:100%;
+    padding:10px 12px;
+    border-radius:999px;
+    border:1px solid rgba(255,255,255,0.22);
+    background:rgba(255,255,255,0.10);
+    color:rgba(240,246,252,0.94);
+    outline:none;
+    font-weight:800;
+  }
+  .calcInputRow input::placeholder{color:rgba(240,246,252,0.55)}
+  .calcStatus{
+    margin-top:8px;
+    font-size:13px;
+    padding:8px 10px;
+    border-radius:10px;
+    background:rgba(255,255,255,0.08);
+    border:1px solid rgba(255,255,255,0.12);
+    color:rgba(240,246,252,0.90);
+  }
+
+  .lab-panel{
+    background:linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(240,240,255,0.98) 100%);
+    border:3px solid #667eea;
+    border-radius:15px;
+    padding:14px;
+    width:100%;
+    display:none;
+    box-shadow:0 10px 40px rgba(102,126,234,0.3);
+    color:#111;
+  }
+  .lab-panel.visible{display:block}
+  .energy-bar{height:18px;background:#ddd;border-radius:10px;margin:6px 0;overflow:hidden}
+  .energy-fill{height:100%;transition:width .1s}
+  .ek{background:linear-gradient(to right,#4CAF50,#81C784)}
+  .ep{background:linear-gradient(to right,#2196F3,#64B5F6)}
+  .em{background:linear-gradient(to right,#FF9800,#FFB74D)}
+  .graph{width:100%;height:120px;border:1px solid #ccc;margin-top:10px;background:#fff;border-radius:8px}
+
+  .intro-screen,.win-screen{
+    position:fixed; inset:0;
+    background:rgba(0,0,0,0.92);
+    z-index:1000;
+    overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+    padding:14px;
+    display:flex; justify-content:center; align-items:center;
+  }
+  .screen-content{
+    max-width:900px; width:100%;
+    padding:22px;
+    text-align:center;
+    background:linear-gradient(135deg, rgba(20,20,30,0.98) 0%, rgba(40,30,50,0.98) 100%);
+    border-radius:22px;
+    border:3px solid #667eea;
+    box-shadow:0 20px 60px rgba(0,0,0,0.7);
+    max-height:calc(100vh - 28px);
+    overflow:auto;
+    -webkit-overflow-scrolling:touch;
+    color:rgba(235,242,248,0.92);
+  }
+  .screen-content h1{
+    color:rgba(255,215,0,0.92);
+    margin-bottom:12px;
+    font-size:32px;
+    text-shadow:0 0 20px rgba(255,215,0,0.5);
+  }
+  .screen-content p{line-height:1.6;margin:10px 0;font-size:16px;color:rgba(235,242,248,0.88)}
+  details{
+    text-align:left; margin-top:12px;
+    background:rgba(255,255,255,0.06);
+    border:1px solid rgba(255,255,255,0.14);
+    padding:10px 12px; border-radius:14px;
+    color:rgba(235,242,248,0.88);
+  }
+  details summary{cursor:pointer;font-weight:900;color:rgba(255,215,0,0.92);list-style:none}
+  details summary::-webkit-details-marker{display:none}
+  .startBar{
+    position:sticky; bottom:0;
+    padding-top:12px;
+    background:linear-gradient(180deg, rgba(20,20,30,0) 0%, rgba(20,20,30,0.95) 50%, rgba(20,20,30,0.98) 100%);
+  }
+  .hidden{display:none!important}
+
+  .langChooser{
+    display:flex;
+    gap:10px;
+    justify-content:center;
+    align-items:center;
+    margin:10px 0 10px 0;
+    flex-wrap:wrap;
+  }
+  .langLabel{
+    font-weight:900;
+    color:rgba(240,246,252,0.90);
+    opacity:0.95;
+  }
+  .langBtn{
+    width:auto;
+    padding:10px 14px;
+    border-radius:999px;
+    border:1px solid rgba(255,255,255,0.18);
+    background:rgba(255,255,255,0.08);
+    box-shadow:none;
+    font-weight:900;
+  }
+  .langBtn.selected{
+    border-color:rgba(255,215,0,0.65);
+    background:rgba(255,215,0,0.10);
+  }
+  .rememberRow{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:10px;
+    margin-bottom:6px;
+    color:rgba(235,242,248,0.88);
+    font-size:14px;
+  }
+  .rememberRow input{transform:scale(1.2); accent-color:rgba(255,215,0,0.92);}
+
+  @media (max-width: 980px){
+    body{overflow:auto}
+    #layout{flex-direction:column; align-items:center}
+    #sidePanel{width:min(560px, calc(100vw - 24px))}
+  }
+  @media (max-width: 520px){
+    .btnRow3{grid-template-columns:1fr 1fr}
+    button{padding:12px 14px;font-size:15px}
+    #snapshotBlock{display:none}
+    .screen-content h1{font-size:26px}
+    .calcInputRow{grid-template-columns:1fr}
+  }
+</style>
+</head>
+
+<body>
+<div id="layout">
+  <div id="gameWrap">
+    <canvas id="gameCanvas" width="1200" height="700"></canvas>
+    <div class="mini" style="color:rgba(255,255,255,0.9); text-align:center;">
+      Responsive: sliders + buttons • Desktop keys: SPACE, ↑↓, ←→, H/J, P, S, N, L, K, F, M
+    </div>
+  </div>
+
+  <div id="sidePanel">
+    <div class="hud">
+      <div class="topRow">
+        <strong id="hudTitle">Επιχείρηση Σωτηρία</strong>
+        <button class="tinyBtn" id="langBtn" onclick="toggleLang()">GR</button>
+      </div>
+
+      <div>
+        <span id="lblH">Ύψος (h):</span> <span id="heightText">5.0</span> m<br>
+        <span id="lblD">Απόσταση (d):</span> <span id="distText">20.0</span> m<br>
+        <span id="lblV0">Ταχύτητα (v₀):</span> <span id="velocityText">15.0</span> m/s<br>
+        <span id="lblAttempts">Προσπάθειες:</span> <span id="attemptText">0</span> |
+        <span id="lblScore">Βαθμός:</span> <span id="scoreValue">--</span>/100 |
+        <span id="lblHints">Υποδείξεις:</span> <span id="hintCount">0</span>
+      </div>
+
+      <div class="controlBlock">
+        <div class="controlTitle" id="controlTitle">Ρυθμίσεις & Χειρισμός</div>
+
+        <div class="sliderRow">
+          <div class="sliderLabel"><span id="lblV0Slider">v₀ (m/s)</span><strong id="v0Val">15.0</strong></div>
+          <input id="v0Slider" type="range" min="5" max="40" step="0.5" value="15" />
+
+          <div class="sliderLabel"><span id="lblHSlider">h (m)</span><strong id="hVal">5.0</strong></div>
+          <input id="hSlider" type="range" min="1" max="15" step="0.5" value="5" />
+
+          <div class="sliderLabel"><span id="lblDSlider">d (m)</span><strong id="dVal">20</strong></div>
+          <input id="dSlider" type="range" min="5" max="50" step="1" value="20" />
+        </div>
+
+        <div class="calcBox">
+          <div class="calcTitle" id="calcTitle">Υπολογισμός πριν τη βολή</div>
+          <div class="calcLine" id="calcLineT">t = √(2h/g) = …</div>
+          <div class="calcLine" id="calcLineV">v₀ = d/t = …</div>
+
+          <div class="calcInputRow">
+            <input id="studentV0" type="number" inputmode="decimal" placeholder="Γράψε v₀ (m/s)" step="0.01" />
+            <button id="checkBtn" onclick="checkStudentV0()">✅ Check</button>
+          </div>
+          <div class="calcStatus" id="calcStatus">
+            (Tip) Υπολόγισε v₀, γράψ’ την εδώ και πάτα Check. Μετά κάνε εκτόξευση.
+          </div>
+        </div>
+
+        <div class="btnRow" style="margin-top:12px;">
+          <button id="launchBtn" onclick="launch()">🚀 Εκτόξευση</button>
+          <button id="resetBtn" onclick="resetAttempt()">🔄 Επανάληψη</button>
+        </div>
+
+        <div class="btnRow3">
+          <button id="pauseBtn" onclick="togglePause()">⏸ Παύση</button>
+          <button id="slowBtn" onclick="toggleSlowMo()">🐌 Αργά</button>
+          <button id="stepBtn" onclick="stepForward()">⏭ Βήμα</button>
+        </div>
+
+        <div class="btnRow">
+          <button id="labBtn" onclick="toggleLab()">🔬 Lab</button>
+          <button id="hintBtn" onclick="showHint()">💡 Υπόδειξη</button>
+        </div>
+
+        <div class="btnRow">
+          <button id="fullBtn" onclick="toggleFullscreen()">⛶ Fullscreen</button>
+          <button id="soundBtn" onclick="toggleSound()">🔊 <span id="soundLbl">Ήχος</span>: <span id="soundStatus">ON</span></button>
+        </div>
+
+        <div class="status-line">
+          <span id="lblSlow">Αργά:</span> <strong><span id="slowMoStatus">OFF</span></strong> |
+          <span id="lblPause">Παύση:</span> <strong><span id="pauseStatus">OFF</span></strong>
+        </div>
+      </div>
+
+      <div class="hint-box" id="hintBox"></div>
+
+      <div id="snapshotBlock" style="margin-top:10px; border-top:1px solid rgba(255,255,255,0.18); padding-top:10px;">
+        <strong id="snapTitle">Στιγμιότυπο:</strong><br>
+        t: <span id="snapT">0.000</span> s |
+        x: <span id="snapX">0.00</span> m |
+        y: <span id="snapY">0.00</span> m<br>
+        vₓ: <span id="snapVx">0.00</span> m/s |
+        vᵧ: <span id="snapVy">0.00</span> m/s
+      </div>
+
+      <div id="resultText" style="margin-top:10px; font-size:16px; font-weight:900;"></div>
+      <div id="medalText" class="medal"></div>
+    </div>
+
+    <div class="lab-panel" id="labPanel">
+      <h3 style="margin-bottom:10px; color:#2196F3;" id="labTitle">🔬 Εργαστήριο Φυσικής</h3>
+
+      <div style="margin:10px 0;">
+        <strong id="labEnergy">Ενέργεια (J):</strong><br>
+        <span id="labEkLbl">Κινητική (Eₖ):</span> <span id="ekText">0</span> J
+        <div class="energy-bar"><div class="energy-fill ek" id="ekBar" style="width:0%"></div></div>
+
+        <span id="labEpLbl">Δυναμική (Eₚ):</span> <span id="epText">0</span> J
+        <div class="energy-bar"><div class="energy-fill ep" id="epBar" style="width:0%"></div></div>
+
+        <span id="labEmLbl">Μηχανική (Eₘ):</span> <span id="emText">0</span> J
+        <div class="energy-bar"><div class="energy-fill em" id="emBar" style="width:0%"></div></div>
+      </div>
+
+      <div style="margin:12px 0;">
+        <strong id="labTheoryHdr">Θεωρία (χωρίς αντίσταση αέρα):</strong><br>
+        t = √(2h/g): <span id="theoryTime">0</span> s<br>
+        v₀ = d/t: <span id="theoryV0">0</span> m/s
+      </div>
+
+      <div style="margin:12px 0;">
+        <strong id="labMeasHdr">Μετρήσεις (στο ύψος y = h):</strong><br>
+        t: <span id="measTime">0</span> s<br>
+        x: <span id="measDist">0</span> m<br>
+        <span id="labErrLbl">Σφάλμα:</span> <span id="errorPercent">0</span>%
+      </div>
+
+      <canvas id="graphCanvas" class="graph"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- INTRO -->
+<div class="intro-screen" id="introScreen">
+  <div class="screen-content" role="dialog" aria-modal="true">
+    <h1 id="introH1">⚡ Επιχείρηση Σωτηρία ⚡</h1>
+    <p id="introEmergency" style="color:#FF5252; font-weight:900;">🌊 ΚΑΤΑΣΤΑΣΗ ΕΚΤΑΚΤΗΣ ΑΝΑΓΚΗΣ 🌊</p>
+
+    <div class="langChooser" aria-label="Language chooser">
+      <span class="langLabel" id="langPickLabel">Γλώσσα / Language:</span>
+      <button class="langBtn" id="pickEl" onclick="setLang('el')">Ελληνικά</button>
+      <button class="langBtn" id="pickEn" onclick="setLang('en')">English</button>
+      <button class="langBtn" id="pickIt" onclick="setLang('it')">Italiano</button>
+    </div>
+
+    <div class="rememberRow">
+      <input type="checkbox" id="rememberLang" />
+      <label for="rememberLang" id="rememberLabel">Να θυμάσαι την επιλογή μου</label>
+    </div>
+
+    <p id="introP1"></p>
+    <p id="introP2"></p>
+    <p id="introP3"></p>
+    <p id="introP4"></p>
+
+    <details open>
+      <summary id="scoreSummary">Βαθμολογία (άριστα 100)</summary>
+      <div id="scoreExpl" style="margin-top:10px; font-size:14px; line-height:1.55;"></div>
+    </details>
+
+    <details open>
+      <summary id="calcSummary">Τι να κάνουν οι μαθητές</summary>
+      <div id="calcExpl" style="margin-top:10px; font-size:14px; line-height:1.55;"></div>
+    </details>
+
+    <details>
+      <summary id="controlsSummary">Χειρισμός</summary>
+      <div id="controlsExpl" style="margin-top:10px; font-size:14px; line-height:1.55;"></div>
+    </details>
+
+    <div class="startBar">
+      <button id="startBtn" onclick="startGame()" style="font-size:18px; padding:14px 18px;">🚀 Έναρξη Αποστολής</button>
+      <p class="mini" id="scrollHint" style="margin-top:10px; color:#B0BEC5;"></p>
+    </div>
+  </div>
+</div>
+
+<!-- WIN -->
+<div class="win-screen hidden" id="winScreen">
+  <div class="screen-content" role="dialog" aria-modal="true">
+    <h1 id="winH1">🎉 ΕΠΙΤΥΧΙΑ! 🎉</h1>
+    <p id="winMessage"></p>
+    <div id="winMedal" class="medal"></div>
+    <p id="winScore"></p>
+    <p id="winScience"></p>
+    <div class="startBar">
+      <button id="againBtn" onclick="location.reload()" style="font-size:18px; padding:14px 18px;">🔄 Νέα Προσπάθεια</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ================== I18N ================== */
+let lang = 'el'; // default
+const I18N = {
+  el: {
+    hudTitle: 'Επιχείρηση Σωτηρία',
+    lblH:'Ύψος (h):', lblD:'Απόσταση (d):', lblV0:'Ταχύτητα (v₀):',
+    lblAttempts:'Προσπάθειες:', lblScore:'Βαθμός:', lblHints:'Υποδείξεις:',
+    controlTitle:'Ρυθμίσεις & Χειρισμός',
+    lblV0Slider:'v₀ (m/s)', lblHSlider:'h (m)', lblDSlider:'d (m)',
+    calcTitle:'Υπολογισμός πριν τη βολή',
+    studentPh:'Γράψε v₀ (m/s)',
+    calcStatusTip:'(Tip) Υπολόγισε v₀, γράψ’ την εδώ και πάτα Check. Μετά κάνε εκτόξευση.',
+    launch:'🚀 Εκτόξευση', reset:'🔄 Επανάληψη',
+    pause:'⏸ Παύση', slow:'🐌 Αργά', step:'⏭ Βήμα',
+    lab:'🔬 Lab', hint:'💡 Υπόδειξη', full:'⛶ Fullscreen',
+    slowLbl:'Αργά:', pauseLbl:'Παύση:',
+    soundLbl:'Ήχος',
+    snapTitle:'Στιγμιότυπο:',
+    labTitle:'🔬 Εργαστήριο Φυσικής',
+    labEnergy:'Ενέργεια (J):',
+    labEkLbl:'Κινητική (Eₖ):', labEpLbl:'Δυναμική (Eₚ):', labEmLbl:'Μηχανική (Eₘ):',
+    labTheoryHdr:'Θεωρία (χωρίς αντίσταση αέρα):',
+    labMeasHdr:'Μετρήσεις (στο ύψος y = h):',
+    labErrLbl:'Σφάλμα:',
+    introH1:'⚡ Επιχείρηση Σωτηρία ⚡',
+    introEmergency:'🌊 ΚΑΤΑΣΤΑΣΗ ΕΚΤΑΚΤΗΣ ΑΝΑΓΚΗΣ 🌊',
+    introP1:'Πρωτοφανής βροχόπτωση στο <strong>Μοσχάτο</strong>!',
+    introP2:'<strong style="color:#FF9800;">Ο Ιλισός και ο Κηφισός έχουν υπερχειλίσει.</strong> Η πόλη είναι κομμένη στα δύο.',
+    introP3:'Η <strong style="color:#E91E63;">γιαγιά Λίτσα</strong> χρειάζεται επειγόντως την <strong style="color:#4CAF50;">ινσουλίνη</strong> της.',
+    introP4:'Εσείς είστε στην ταράτσα του <strong>2ου Λυκείου Μοσχάτου</strong>. Η μόνη λύση είναι ο οριζόντιος εκτοξευτής.',
+    scoreSummary:'Βαθμολογία (άριστα 100)',
+    calcSummary:'Τι να κάνουν οι μαθητές',
+    controlsSummary:'Χειρισμός',
+    scrollHint:'Αν δεν φαίνεται το κουμπί, κάντε λίγο scroll.',
+    startBtn:'🚀 Έναρξη Αποστολής',
+    winH1:'🎉 ΕΠΙΤΥΧΙΑ! 🎉',
+    againBtn:'🔄 Νέα Προσπάθεια',
+    rememberLabel:'Να θυμάσαι την επιλογή μου',
+    scoreExpl: (GOLD_MAX, SILVER_MAX)=> `
+      <strong>Μετάλλια (σφάλμα επιτυχημένης βολής):</strong><br>
+      • 🥇 Χρυσό: ≤ ${GOLD_MAX}% (−0)<br>
+      • 🥈 Ασημένιο: ≤ ${SILVER_MAX}% (−8)<br>
+      • 🥉 Χάλκινο: > ${SILVER_MAX}% (−16)<br><br>
+      <strong>Τελικός βαθμός</strong> = (Προσπάθειες 70) + (Ακρίβεια 30) − (5×Υποδείξεις) − (Ποινές λάθους v₀)<br>
+      • Προσπάθειες: 70 − 7×(επιπλέον προσπάθειες)<br>
+      • Ακρίβεια: 30 − ποινή μεταλλίου
+    `,
+    calcExpl: `
+      1) Υπολογίστε <strong>t = √(2h/g)</strong><br>
+      2) Υπολογίστε <strong>v₀ = d/t</strong><br>
+      3) Βάλτε το v₀ και δοκιμάστε. Αν είναι λάθος, απλά χάνετε βαθμούς… με αστείο σχόλιο.
+    `,
+    controlsExpl: `
+      • Sliders: v₀, h, d<br>
+      • Εκτόξευση / Παύση / Αργά / Βήμα<br>
+      • Desktop: SPACE εκτόξευση, ↑↓ v₀, ←→ d, H/J h, P pause, S slow, N step, L lab, K hint, F fullscreen, M sound
+    `,
+    schoolLine1:'2ο Λύκειο', schoolLine2:'Μοσχάτου',
+    grannyName:'γιαγιά Λίτσα',
+    bubbleSuccess:'Το φάρμακό μου!',
+    bubbleNoWater:'Το φάρμακό μου!',
+    bubbleWater:'Αχ, τι κρίμα!',
+    successMsg:'✓ ΕΠΙΤΥΧΙΑ! Το φάρμακο έφτασε στα χέρια της.',
+    farMsg:'✗ Πολύ μακριά! Χτύπησε τον τοίχο.',
+    shortMsg:'✗ Πολύ κοντά! Έπεσε στο νερό.',
+    winMsg:'Το φάρμακο προσγειώθηκε με ασφάλεια. Η γιαγιά Λίτσα σώθηκε!',
+    calcOk:(pct)=>`✅ Ωραία. Απόκλιση ${pct.toFixed(1)}%.`,
+    calcBad:(pct)=>`😅 Χμμ… Απόκλιση ${pct.toFixed(1)}%. (Η Φυσική συγχωρεί. Η βαθμολογία… όχι.)`,
+    calcNeedNumber:'❗ Γράψε αριθμό για v₀ (m/s).',
+    v0PenaltyMsg:(p)=>`😈 Ποινή λάθους v₀: −${p} (οι “δαίμονες του slider” πήραν μερίδιο).`,
+    langPickLabel:'Γλώσσα / Language:'
+  },
+
+  en: {
+    hudTitle: 'Rescue Mission',
+    lblH:'Height (h):', lblD:'Distance (d):', lblV0:'Speed (v₀):',
+    lblAttempts:'Attempts:', lblScore:'Score:', lblHints:'Hints:',
+    controlTitle:'Controls & Settings',
+    lblV0Slider:'v₀ (m/s)', lblHSlider:'h (m)', lblDSlider:'d (m)',
+    calcTitle:'Before you launch: do the math',
+    studentPh:'Type v₀ (m/s)',
+    calcStatusTip:'(Tip) Compute v₀, type it here and press Check. Then launch.',
+    launch:'🚀 Launch', reset:'🔄 Reset',
+    pause:'⏸ Pause', slow:'🐌 Slow', step:'⏭ Step',
+    lab:'🔬 Lab', hint:'💡 Hint', full:'⛶ Fullscreen',
+    slowLbl:'Slow:', pauseLbl:'Pause:',
+    soundLbl:'Sound',
+    snapTitle:'Snapshot:',
+    labTitle:'🔬 Physics Lab',
+    labEnergy:'Energy (J):',
+    labEkLbl:'Kinetic (Eₖ):', labEpLbl:'Potential (Eₚ):', labEmLbl:'Mechanical (Eₘ):',
+    labTheoryHdr:'Theory (no air resistance):',
+    labMeasHdr:'Measurements (at height y = h):',
+    labErrLbl:'Error:',
+    introH1:'⚡ Rescue Mission ⚡',
+    introEmergency:'🌊 EMERGENCY 🌊',
+    introP1:'Record rainfall in <strong>Our City</strong>!',
+    introP2:'<strong style="color:#FF9800;">The river has flooded.</strong> The city is split in two.',
+    introP3:'<strong style="color:#E91E63;">Grandma Litsa</strong> urgently needs her <strong style="color:#4CAF50;">insulin</strong>.',
+    introP4:'You are on the roof of <strong>Our School</strong>. Your only hope is your horizontal launcher.',
+    scoreSummary:'Scoring (max 100)',
+    calcSummary:'What students should do',
+    controlsSummary:'Controls',
+    scrollHint:'If the button is partly hidden, scroll a bit.',
+    startBtn:'🚀 Start Mission',
+    winH1:'🎉 SUCCESS! 🎉',
+    againBtn:'🔄 Try Again',
+    rememberLabel:'Remember my choice',
+    scoreExpl: (GOLD_MAX, SILVER_MAX)=> `
+      <strong>Medals (error of the successful launch):</strong><br>
+      • 🥇 Gold: ≤ ${GOLD_MAX}% (−0)<br>
+      • 🥈 Silver: ≤ ${SILVER_MAX}% (−8)<br>
+      • 🥉 Bronze: > ${SILVER_MAX}% (−16)<br><br>
+      <strong>Final score</strong> = (Attempts 70) + (Accuracy 30) − (5×Hints) − (Wrong v₀ penalties)<br>
+      • Attempts: 70 − 7×(extra attempts)<br>
+      • Accuracy: 30 − medal penalty
+    `,
+    calcExpl: `
+      1) Compute <strong>t = √(2h/g)</strong><br>
+      2) Compute <strong>v₀ = d/t</strong><br>
+      3) Set v₀ and try. Wrong v₀ does not lock the game — it just costs points (and jokes).
+    `,
+    controlsExpl: `
+      • Sliders: v₀, h, d<br>
+      • Launch / Pause / Slow / Step<br>
+      • Desktop: SPACE launch, ↑↓ v₀, ←→ d, H/J h, P pause, S slow, N step, L lab, K hint, F fullscreen, M sound
+    `,
+    schoolLine1:'Our School', schoolLine2:'',
+    grannyName:'Grandma Litsa',
+    bubbleSuccess:'My medicine!',
+    bubbleNoWater:'My medicine!',
+    bubbleWater:'What a pity!',
+    successMsg:'✓ SUCCESS! The medicine reached her hands.',
+    farMsg:'✗ Too far! It hit the wall.',
+    shortMsg:'✗ Too short! Splash… into the water.',
+    winMsg:'Safe landing. Grandma Litsa is saved!',
+    calcOk:(pct)=>`✅ Nice. Deviation ${pct.toFixed(1)}%.`,
+    calcBad:(pct)=>`😅 Not quite. Deviation ${pct.toFixed(1)}%. (Physics forgives. Your score… negotiates.)`,
+    calcNeedNumber:'❗ Type a number for v₀ (m/s).',
+    v0PenaltyMsg:(p)=>`😈 Wrong v₀ penalty: −${p} (the slider gremlins took it).`,
+    langPickLabel:'Language:'
+  },
+
+  it: {
+    hudTitle: 'Missione di Salvataggio',
+    lblH:'Altezza (h):', lblD:'Distanza (d):', lblV0:'Velocità (v₀):',
+    lblAttempts:'Tentativi:', lblScore:'Punteggio:', lblHints:'Suggerimenti:',
+    controlTitle:'Comandi & Impostazioni',
+    lblV0Slider:'v₀ (m/s)', lblHSlider:'h (m)', lblDSlider:'d (m)',
+    calcTitle:'Prima del lancio: fai i calcoli',
+    studentPh:'Scrivi v₀ (m/s)',
+    calcStatusTip:'(Suggerimento) Calcola v₀, scrivilo qui e premi Check. Poi lancia.',
+    launch:'🚀 Lancia', reset:'🔄 Reset',
+    pause:'⏸ Pausa', slow:'🐌 Lento', step:'⏭ Passo',
+    lab:'🔬 Lab', hint:'💡 Aiuto', full:'⛶ Schermo intero',
+    slowLbl:'Lento:', pauseLbl:'Pausa:',
+    soundLbl:'Audio',
+    snapTitle:'Istantanea:',
+    labTitle:'🔬 Laboratorio di Fisica',
+    labEnergy:'Energia (J):',
+    labEkLbl:'Cinetica (Eₖ):', labEpLbl:'Potenziale (Eₚ):', labEmLbl:'Meccanica (Eₘ):',
+    labTheoryHdr:"Teoria (senza resistenza dell'aria):",
+    labMeasHdr:'Misure (alla quota y = h):',
+    labErrLbl:'Errore:',
+    introH1:'⚡ Missione di Salvataggio ⚡',
+    introEmergency:'🌊 EMERGENZA 🌊',
+    introP1:'Pioggia fortissima in <strong>città</strong>!',
+    introP2:'<strong style="color:#FF9800;">Le strade sono allagate:</strong> i <strong>tombini</strong> e le <strong>griglie</strong> sono intasati. Muoversi è difficilissimo!',
+    introP3:'La <strong style="color:#E91E63;">nonna Anna</strong> ha urgente bisogno della sua <strong style="color:#4CAF50;">insulina</strong>.',
+    introP4:'Sei sul tetto del <strong>L.S. Renato Caccioppoli</strong>. La tua speranza è il lanciatore orizzontale costruito in laboratorio!',
+    scoreSummary:'Punteggio (max 100)',
+    calcSummary:'Cosa devono fare gli studenti',
+    controlsSummary:'Comandi',
+    scrollHint:'Se il pulsante è tagliato, scorri un po’.',
+    startBtn:'🚀 Avvia Missione',
+    winH1:'🎉 SUCCESSO! 🎉',
+    againBtn:'🔄 Nuovo tentativo',
+    rememberLabel:'Ricorda la scelta',
+    scoreExpl: (GOLD_MAX, SILVER_MAX)=> `
+      <strong>Medaglie (errore del lancio riuscito):</strong><br>
+      • 🥇 Oro: ≤ ${GOLD_MAX}% (−0)<br>
+      • 🥈 Argento: ≤ ${SILVER_MAX}% (−8)<br>
+      • 🥉 Bronzo: > ${SILVER_MAX}% (−16)<br><br>
+      <strong>Punteggio finale</strong> = (Tentativi 70) + (Precisione 30) − (5×Aiuti) − (Penalità per v₀ sbagliato)<br>
+      • Tentativi: 70 − 7×(tentativi extra)<br>
+      • Precisione: 30 − penalità medaglia
+    `,
+    calcExpl: `
+      1) Calcola <strong>t = √(2h/g)</strong><br>
+      2) Calcola <strong>v₀ = d/t</strong><br>
+      3) Imposta v₀ e prova. Se è sbagliato, il gioco non si blocca: perdi solo punti (con battute).
+    `,
+    controlsExpl: `
+      • Sliders: v₀, h, d<br>
+      • Lancio / Pausa / Lento / Passo<br>
+      • Desktop: SPACE lancio, ↑↓ v₀, ←→ d, H/J h, P pausa, S lento, N passo, L lab, K aiuto, F fullscreen, M audio
+    `,
+    schoolLine1:'L.S. Renato', schoolLine2:'Caccioppoli',
+    grannyName:'nonna Anna',
+    bubbleSuccess:'La mia medicina!',
+    bubbleNoWater:'La mia medicina!',
+    bubbleWater:'Che peccato!',
+    successMsg:'✓ SUCCESSO! La medicina è arrivata nelle sue mani.',
+    farMsg:'✗ Troppo lontano! Ha colpito il muro.',
+    shortMsg:"✗ Troppo corto! Splash... nell'acqua.",
+    winMsg:'Atterraggio sicuro. Nonna Anna è salva!',
+    calcOk:(pct)=>`✅ Bene. Deviazione ${pct.toFixed(1)}%.`,
+    calcBad:(pct)=>`😅 Non proprio. Deviazione ${pct.toFixed(1)}%. (La fisica perdona. Il punteggio… no.)`,
+    calcNeedNumber:'❗ Scrivi un numero per v₀ (m/s).',
+    v0PenaltyMsg:(p)=>`😈 Penalità v₀ sbagliato: −${p} (i folletti dello slider hanno preso la loro parte).`,
+    langPickLabel:'Lingua / Language:'
+  }
+};
+
+/* ================== Core ================== */
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const graphCanvas = document.getElementById('graphCanvas');
+const graphCtx = graphCanvas.getContext('2d');
+
+const PPM = 50;
+const g = 9.81;
+const m = 0.5;
+const GOLD_MAX = 1.0;
+const SILVER_MAX = 3.0;
+
+let h = 5.0;
+let d = 20.0;
+
+const groundLevel = 520;
+const launcherX = 150;
+const TARGET_HANDS_Y = groundLevel - 190;
+
+let cameraY = 0;
+const CAMERA_MIN_ROOF = 70;
+const CAMERA_MAX_SHIFT = 220;
+const MAX_H = 15.0;
+
+let slowMo = false;
+let timeScale = 1.0;
+let isPaused = false;
+const STEP_DT = 0.02;
+let stepOnce = false;
+
+let hintsUsed = 0;
+let hintCooldown = false;
+let hintHideTimer = null;
+
+let calcPenaltyTotal = 0;
+
+let soundEnabled = true;
+let audioCtx = null;
+let thunderCooldown = 0;
+
+const backgroundBuildings = [
+  {x: 50,  h: 140, seed: 11},
+  {x: 300, h: 100, seed: 22},
+  {x: 550, h: 120, seed: 33},
+  {x: 800, h:  90, seed: 44},
+  {x: 1000,h: 110, seed: 55}
+];
+
+let storm = { flash: 0, bolt: null };
+let bubble = { active:false, text:'', x:0, y:0, timer:0 };
+
+let school = { top:0, height:0, roofY:0, launchY:0 };
+let targetX = 0;
+let targetY = TARGET_HANDS_Y;
+
+let t_theory = 0;
+let v0_theory = 0;
+
+let gameStarted = false;
+
+let gameState = {
+  v0: 15.0,
+  moving:false,
+  measured:false,
+  success:false,
+  outcome:"none",
+  attempts:0,
+  score:null,
+  x:0,y:0,vx:0,vy:0,t:0,
+  measT:0, measX:0,
+  hitWater:false,
+  pityOnWater:false,
+  splash:{active:false,x:0,y:0,timer:0},
+  trail:[], trailVisible:false, trailRecording:false, trailHold:0,
+  energyHistory:[]
+};
+
+/* ================== Remember language (localStorage) ================== */
+const LS_REM = 'rm_remember';
+const LS_LANG = 'rm_lang';
+
+function loadLangPreference(){
+  try{
+    const remember = localStorage.getItem(LS_REM) === '1';
+    const stored = localStorage.getItem(LS_LANG);
+    if (remember && stored && I18N[stored]) {
+      lang = stored;
+      const cb = document.getElementById('rememberLang');
+      if (cb) cb.checked = true;
+    }
+  }catch(e){}
+}
+function saveLangPreference(){
+  const cb = document.getElementById('rememberLang');
+  const remember = !!(cb && cb.checked);
+  try{
+    if (remember){
+      localStorage.setItem(LS_REM, '1');
+      localStorage.setItem(LS_LANG, lang);
+    }else{
+      localStorage.removeItem(LS_REM);
+      localStorage.removeItem(LS_LANG);
+    }
+  }catch(e){}
+}
+
+/* ================== Language UI helpers ================== */
+function langCodeForBtn(){
+  if (lang==='el') return 'GR';
+  if (lang==='en') return 'EN';
+  return 'IT';
+}
+function refreshLangButtons(){
+  const elBtn = document.getElementById('pickEl');
+  const enBtn = document.getElementById('pickEn');
+  const itBtn = document.getElementById('pickIt');
+  if (elBtn) elBtn.classList.toggle('selected', lang==='el');
+  if (enBtn) enBtn.classList.toggle('selected', lang==='en');
+  if (itBtn) itBtn.classList.toggle('selected', lang==='it');
+
+  const hudBtn = document.getElementById('langBtn');
+  if (hudBtn) hudBtn.textContent = langCodeForBtn();
+}
+
+/* ================== Apply language ================== */
+function applyLanguage(){
+  const T = I18N[lang];
+  document.documentElement.lang = lang;
+
+  document.getElementById('hudTitle').textContent = T.hudTitle;
+  document.getElementById('lblH').textContent = T.lblH;
+  document.getElementById('lblD').textContent = T.lblD;
+  document.getElementById('lblV0').textContent = T.lblV0;
+  document.getElementById('lblAttempts').textContent = T.lblAttempts;
+  document.getElementById('lblScore').textContent = T.lblScore;
+  document.getElementById('lblHints').textContent = T.lblHints;
+
+  document.getElementById('controlTitle').textContent = T.controlTitle;
+  document.getElementById('lblV0Slider').textContent = T.lblV0Slider;
+  document.getElementById('lblHSlider').textContent = T.lblHSlider;
+  document.getElementById('lblDSlider').textContent = T.lblDSlider;
+
+  document.getElementById('calcTitle').textContent = T.calcTitle;
+  document.getElementById('studentV0').placeholder = T.studentPh;
+  document.getElementById('calcStatus').textContent = T.calcStatusTip;
+
+  document.getElementById('launchBtn').textContent = T.launch;
+  document.getElementById('resetBtn').textContent = T.reset;
+  document.getElementById('pauseBtn').textContent = T.pause;
+  document.getElementById('slowBtn').textContent = T.slow;
+  document.getElementById('stepBtn').textContent = T.step;
+  document.getElementById('labBtn').textContent = T.lab;
+  document.getElementById('hintBtn').textContent = T.hint;
+  document.getElementById('fullBtn').textContent = T.full;
+
+  document.getElementById('lblSlow').textContent = T.slowLbl;
+  document.getElementById('lblPause').textContent = T.pauseLbl;
+  document.getElementById('snapTitle').textContent = T.snapTitle;
+
+  document.getElementById('soundLbl').textContent = T.soundLbl;
+
+  document.getElementById('labTitle').textContent = T.labTitle;
+  document.getElementById('labEnergy').textContent = T.labEnergy;
+  document.getElementById('labEkLbl').textContent = T.labEkLbl;
+  document.getElementById('labEpLbl').textContent = T.labEpLbl;
+  document.getElementById('labEmLbl').textContent = T.labEmLbl;
+  document.getElementById('labTheoryHdr').textContent = T.labTheoryHdr;
+  document.getElementById('labMeasHdr').textContent = T.labMeasHdr;
+  document.getElementById('labErrLbl').textContent = T.labErrLbl;
+
+  document.getElementById('introH1').textContent = T.introH1;
+  document.getElementById('introEmergency').textContent = T.introEmergency;
+  document.getElementById('introP1').innerHTML = T.introP1;
+  document.getElementById('introP2').innerHTML = T.introP2;
+  document.getElementById('introP3').innerHTML = T.introP3;
+  document.getElementById('introP4').innerHTML = T.introP4;
+
+  document.getElementById('scoreSummary').textContent = T.scoreSummary;
+  document.getElementById('scoreExpl').innerHTML = T.scoreExpl(GOLD_MAX, SILVER_MAX);
+
+  document.getElementById('calcSummary').textContent = T.calcSummary;
+  document.getElementById('calcExpl').innerHTML = T.calcExpl;
+
+  document.getElementById('controlsSummary').textContent = T.controlsSummary;
+  document.getElementById('controlsExpl').innerHTML = T.controlsExpl;
+
+  document.getElementById('startBtn').textContent = T.startBtn;
+  document.getElementById('scrollHint').textContent = T.scrollHint;
+
+  document.getElementById('winH1').textContent = T.winH1;
+  document.getElementById('againBtn').textContent = T.againBtn;
+
+  document.getElementById('langPickLabel').textContent = T.langPickLabel;
+  document.getElementById('rememberLabel').textContent = T.rememberLabel;
+
+  if (gameState.measured) updateResultDisplay();
+
+  refreshLangButtons();
+}
+
+/* ================== Language actions ================== */
+function toggleLang(){
+  // Cycle GR -> EN -> IT -> GR
+  const next = (lang==='el') ? 'en' : (lang==='en') ? 'it' : 'el';
+  setLang(next);
+}
+function setLang(newLang){
+  if (!I18N[newLang]) return;
+  lang = newLang;
+  applyLanguage();
+  saveLangPreference();
+}
+
+/* ===== Remember checkbox behavior ===== */
+document.getElementById('rememberLang').addEventListener('change', ()=>{
+  saveLangPreference();
+});
+
+/* ===== Audio ===== */
+function getAudioCtx(){
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+function playSillySound(){
+  if (!soundEnabled) return;
+  const ac = getAudioCtx();
+  const t0 = ac.currentTime;
+  const osc = ac.createOscillator();
+  const gain = ac.createGain();
+  osc.type = 'triangle';
+  osc.frequency.setValueAtTime(650, t0);
+  osc.frequency.exponentialRampToValueAtTime(1300, t0 + 0.08);
+  osc.frequency.exponentialRampToValueAtTime(220, t0 + 0.28);
+  gain.gain.setValueAtTime(0.0001, t0);
+  gain.gain.exponentialRampToValueAtTime(0.32, t0 + 0.02);
+  gain.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.35);
+  osc.connect(gain).connect(ac.destination);
+  osc.start(t0); osc.stop(t0 + 0.36);
+}
+function playThunder(){
+  if (!soundEnabled || !gameStarted) return;
+  if (thunderCooldown > 0) return;
+  thunderCooldown = 0.35;
+
+  const ac = getAudioCtx();
+  const t0 = ac.currentTime;
+
+  const dur = 0.70;
+  const nSamp = Math.floor(ac.sampleRate * dur);
+  const buffer = ac.createBuffer(1, nSamp, ac.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i=0;i<nSamp;i++){
+    const w = (Math.random()*2 - 1);
+    data[i] = w * (0.55 * (1 - i/nSamp));
+  }
+  const src = ac.createBufferSource();
+  src.buffer = buffer;
+
+  const lp = ac.createBiquadFilter();
+  lp.type = 'lowpass';
+  lp.frequency.setValueAtTime(180, t0);
+  lp.frequency.exponentialRampToValueAtTime(90, t0 + dur);
+
+  const gain = ac.createGain();
+  gain.gain.setValueAtTime(0.0001, t0);
+  gain.gain.exponentialRampToValueAtTime(0.55, t0 + 0.03);
+  gain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+
+  const osc = ac.createOscillator();
+  const og = ac.createGain();
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(70, t0);
+  osc.frequency.exponentialRampToValueAtTime(35, t0 + dur);
+  og.gain.setValueAtTime(0.0001, t0);
+  og.gain.exponentialRampToValueAtTime(0.35, t0 + 0.04);
+  og.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+
+  src.connect(lp).connect(gain).connect(ac.destination);
+  osc.connect(og).connect(ac.destination);
+
+  src.start(t0); src.stop(t0 + dur);
+  osc.start(t0); osc.stop(t0 + dur);
+}
+
+/* ===== Scoring helpers ===== */
+function clampInputs(){
+  h = Math.max(1.0, Math.min(MAX_H, h));
+  d = Math.max(5.0, Math.min(50.0, d));
+  gameState.v0 = Math.max(5.0, Math.min(40.0, gameState.v0));
+}
+function medalTierFromError(ep){
+  if (ep <= GOLD_MAX) return 'gold';
+  if (ep <= SILVER_MAX) return 'silver';
+  return 'bronze';
+}
+function accuracyPenaltyFromTier(tier){
+  if (tier==='gold') return 0;
+  if (tier==='silver') return 8;
+  return 16;
+}
+function medalFromAccuracy(ep){
+  const tier = medalTierFromError(ep);
+  if (tier==='gold') return '🥇';
+  if (tier==='silver') return '🥈';
+  return '🥉';
+}
+function computeV0PenaltyPct(pct){
+  if (pct <= 1.0) return 0;
+  if (pct <= 3.0) return 1;
+  if (pct <= 8.0) return 3;
+  if (pct <= 15.0) return 6;
+  return 10;
+}
+function computeScore(attempts, ep, hints, calcPenalty){
+  const extra = Math.max(0, attempts-1);
+  const attemptsPts = Math.max(0, 70 - 7*extra);
+  const tier = medalTierFromError(ep);
+  const accPts = Math.max(0, 30 - accuracyPenaltyFromTier(tier));
+  const raw = attemptsPts + accPts - 5*hints - calcPenalty;
+  return Math.max(0, Math.min(100, Math.round(raw)));
+}
+
+/* ===== UI ===== */
+function updateStatusUI(){
+  document.getElementById('slowMoStatus').textContent = slowMo ? 'ON' : 'OFF';
+  document.getElementById('pauseStatus').textContent = isPaused ? 'ON' : 'OFF';
+  document.getElementById('soundStatus').textContent = soundEnabled ? 'ON' : 'OFF';
+}
+function updateAttemptScoreUI(){
+  document.getElementById('attemptText').textContent = gameState.attempts;
+  document.getElementById('scoreValue').textContent = (gameState.score===null)?'--':gameState.score;
+  document.getElementById('hintCount').textContent = hintsUsed;
+}
+function updateCalcBox(){
+  const lineT = document.getElementById('calcLineT');
+  const lineV = document.getElementById('calcLineV');
+  lineT.textContent = `t = √(2h/g) = √(2×${h.toFixed(1)}/${g.toFixed(2)}) = ${t_theory.toFixed(3)} s`;
+  lineV.textContent = `v₀ = d/t = ${d.toFixed(1)}/${t_theory.toFixed(3)} = ${v0_theory.toFixed(2)} m/s`;
+}
+
+/* ===== Theory & positions ===== */
+function updateTheory(){
+  clampInputs();
+  t_theory = Math.sqrt(2*h/g);
+  v0_theory = d / t_theory;
+
+  document.getElementById('heightText').textContent = h.toFixed(1);
+  document.getElementById('distText').textContent = d.toFixed(1);
+  document.getElementById('velocityText').textContent = gameState.v0.toFixed(1);
+  document.getElementById('theoryTime').textContent = t_theory.toFixed(3);
+  document.getElementById('theoryV0').textContent = v0_theory.toFixed(2);
+
+  document.getElementById('hVal').textContent = h.toFixed(1);
+  document.getElementById('dVal').textContent = d.toFixed(0);
+  document.getElementById('v0Val').textContent = gameState.v0.toFixed(1);
+
+  updateCalcBox();
+}
+function updatePositions(){
+  targetX = launcherX + d*PPM;
+  targetY = TARGET_HANDS_Y;
+
+  school.launchY = targetY - h*PPM;
+  school.roofY = school.launchY - 6;
+  school.top = school.roofY + 10;
+  school.height = (groundLevel - school.top);
+
+  cameraY = Math.min(CAMERA_MAX_SHIFT, Math.max(0, CAMERA_MIN_ROOF - school.roofY));
+}
+
+/* ===== Controls ===== */
+function toggleSlowMo(){ slowMo=!slowMo; timeScale=slowMo?0.25:1.0; updateStatusUI(); }
+function togglePause(){ isPaused=!isPaused; updateStatusUI(); }
+function stepForward(){
+  if (!gameState.moving) return;
+  if (!isPaused){ isPaused=true; updateStatusUI(); }
+  stepOnce=true;
+}
+function toggleSound(){ soundEnabled=!soundEnabled; updateStatusUI(); }
+function toggleLab(){ document.getElementById('labPanel').classList.toggle('visible'); }
+
+async function toggleFullscreen(){
+  const el = document.documentElement;
+  try{
+    if (!document.fullscreenElement && el.requestFullscreen) await el.requestFullscreen();
+    else if (document.fullscreenElement && document.exitFullscreen) await document.exitFullscreen();
+  }catch(e){}
+}
+
+/* ===== Check v0 (NO LOCKING) ===== */
+function checkStudentV0(){
+  if (!gameStarted) return;
+  if (gameState.moving) return;
+
+  const T = I18N[lang];
+  const inp = document.getElementById('studentV0');
+  const v = parseFloat(String(inp.value).replace(',','.'));
+  if (!Number.isFinite(v)){
+    document.getElementById('calcStatus').textContent = T.calcNeedNumber;
+    return;
+  }
+
+  gameState.v0 = Math.max(5, Math.min(40, v));
+  document.getElementById('v0Slider').value = String(gameState.v0);
+  updateTheory();
+
+  const pct = Math.abs(gameState.v0 - v0_theory)/v0_theory*100;
+  document.getElementById('calcStatus').textContent =
+    (pct <= 2.0) ? T.calcOk(pct) : T.calcBad(pct);
+}
+
+/* ===== Hint ===== */
+function showHint(){
+  if (hintCooldown) return;
+  hintCooldown = true;
+  setTimeout(()=>hintCooldown=false, 250);
+
+  hintsUsed++;
+  updateAttemptScoreUI();
+  updateTheory();
+
+  const box = document.getElementById('hintBox');
+  box.style.display = 'block';
+  box.innerHTML = `
+    <strong>${lang==='el' ? 'Υπόδειξη (ποινή: −5)' : (lang==='it' ? 'Aiuto (penalità: −5)' : 'Hint (penalty: −5)')}</strong><br>
+    1) t = √(2h/g) = √(2×${h.toFixed(1)}/${g.toFixed(2)}) = <strong>${t_theory.toFixed(3)} s</strong><br>
+    2) v₀ = d/t = ${d.toFixed(1)}/${t_theory.toFixed(3)} = <strong>${v0_theory.toFixed(2)} m/s</strong>
+  `;
+  document.getElementById('studentV0').value = v0_theory.toFixed(2);
+  document.getElementById('calcStatus').textContent =
+    (lang==='el')
+      ? 'Έβαλα το θεωρητικό v₀ στο πεδίο. (Hint: −5)'
+      : (lang==='it')
+        ? 'Ho inserito il v₀ teorico. (Aiuto: −5)'
+        : 'I filled the theoretical v₀. (Hint: −5)';
+
+  if (hintHideTimer) clearTimeout(hintHideTimer);
+  hintHideTimer = setTimeout(()=>box.style.display='none', 2200);
+}
+
+/* ===== Snapshot ===== */
+function updateSnapshotUI(){
+  document.getElementById('snapT').textContent = gameState.t.toFixed(3);
+  document.getElementById('snapX').textContent = gameState.x.toFixed(2);
+  document.getElementById('snapY').textContent = gameState.y.toFixed(2);
+  document.getElementById('snapVx').textContent = gameState.vx.toFixed(2);
+  document.getElementById('snapVy').textContent = gameState.vy.toFixed(2);
+}
+
+/* ===== Lightning + Thunder ===== */
+function startLightning(){
+  storm.flash = 0.14;
+  const x0 = 120 + Math.random()*(canvas.width-240);
+  const y0 = 20, y1 = 300;
+  const steps = 10;
+  let x = x0;
+  const pts = [{x:x0,y:y0}];
+  for (let i=1;i<=steps;i++){
+    const t = i/steps;
+    x += (Math.random()-0.5)*60;
+    pts.push({x:x, y:y0 + t*(y1-y0)});
+  }
+  storm.bolt = pts;
+
+  if (gameStarted && soundEnabled){
+    const delay = 120 + Math.random()*140;
+    setTimeout(()=>{ try{ playThunder(); }catch(e){} }, delay);
+  }
+}
+
+/* ===== Drawing helpers ===== */
+function drawWindowGrid(xLeft,yTop,w,hH,rows,cols,color,blur,alpha,seed){
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.fillStyle = color;
+  ctx.shadowColor = color;
+  ctx.shadowBlur = blur;
+  const padX=12,padY=18;
+  const usableW=w-2*padX, usableH=hH-2*padY;
+  const winW=Math.max(10, usableW/cols*0.35);
+  const winH=Math.max(10, usableH/rows*0.25);
+  for (let r=0;r<rows;r++){
+    for (let c=0;c<cols;c++){
+      const key=(seed + r*37 + c*19)%5;
+      if (key===0) continue;
+      const xx=xLeft+padX+(c+0.5)*(usableW/cols)-winW/2;
+      const yy=yTop +padY+(r+0.5)*(usableH/rows)-winH/2;
+      ctx.fillRect(xx,yy,winW,winH);
+    }
+  }
+  ctx.restore();
+}
+function drawSpeechBubble(text,x,y,alpha=1){
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.font = '900 14px Arial';
+  ctx.textAlign = 'center';
+  const pad=10;
+  const tw = ctx.measureText(text).width;
+  const w = tw + pad*2, hB=30;
+  ctx.fillStyle='rgba(255,255,255,0.92)';
+  ctx.strokeStyle='rgba(0,0,0,0.25)';
+  ctx.lineWidth=2;
+  const r=10;
+  const left=x-w/2, top=y-hB;
+  ctx.beginPath();
+  ctx.moveTo(left+r, top);
+  ctx.lineTo(left+w-r, top);
+  ctx.quadraticCurveTo(left+w,top,left+w,top+r);
+  ctx.lineTo(left+w,top+hB-r);
+  ctx.quadraticCurveTo(left+w,top+hB,left+w-r,top+hB);
+  ctx.lineTo(left+r,top+hB);
+  ctx.quadraticCurveTo(left,top+hB,left,top+hB-r);
+  ctx.lineTo(left,top+r);
+  ctx.quadraticCurveTo(left,top,left+r,top);
+  ctx.closePath(); ctx.fill(); ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(x-8, top+hB);
+  ctx.lineTo(x, top+hB+10);
+  ctx.lineTo(x+8, top+hB);
+  ctx.closePath(); ctx.fill(); ctx.stroke();
+  ctx.fillStyle='#111';
+  ctx.fillText(text,x,top+20);
+  ctx.restore();
+}
+function drawTrajectoryTrail(){
+  if (!gameState.trailVisible || gameState.trail.length<2) return;
+  const alpha = gameState.trailRecording ? 1 : Math.max(0, 1 - (gameState.trailHold/3));
+  if (alpha<=0) return;
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.strokeStyle = 'rgba(255,87,34,0.55)';
+  ctx.lineWidth=4;
+  ctx.beginPath();
+  const p0=gameState.trail[0];
+  ctx.moveTo(launcherX + p0.x*PPM, (school.launchY + p0.y*PPM) + cameraY);
+  for (const p of gameState.trail){
+    ctx.lineTo(launcherX + p.x*PPM, (school.launchY + p.y*PPM) + cameraY);
+  }
+  ctx.stroke();
+  ctx.restore();
+}
+
+/* ===== Drawing ===== */
+function drawBackground(){
+  const sky = ctx.createLinearGradient(0,0,0,320);
+  sky.addColorStop(0,'#4A5568');
+  sky.addColorStop(0.5,'#2D3748');
+  sky.addColorStop(1,'#1A202C');
+  ctx.fillStyle = sky;
+  ctx.fillRect(0,0,canvas.width,320);
+
+  if (storm.flash>0){
+    const a = Math.min(1, storm.flash/0.14);
+    ctx.fillStyle = `rgba(255,255,255,${0.35*a})`;
+    ctx.fillRect(0,0,canvas.width,320);
+    if (storm.bolt){
+      ctx.save();
+      ctx.globalAlpha = 0.9*a;
+      ctx.strokeStyle = 'rgba(255,255,255,0.95)';
+      ctx.lineWidth=3;
+      ctx.beginPath();
+      ctx.moveTo(storm.bolt[0].x, storm.bolt[0].y);
+      for (const p of storm.bolt) ctx.lineTo(p.x,p.y);
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+
+  ctx.strokeStyle='rgba(200,220,255,0.3)';
+  ctx.lineWidth=1;
+  for (let i=0;i<110;i++){
+    const x=Math.random()*canvas.width;
+    const y=(Date.now()*0.5 + i*50)%canvas.height;
+    ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x-5,y+15); ctx.stroke();
+  }
+
+  ctx.fillStyle='#4A5568';
+  for (const b of backgroundBuildings){
+    const top=(320-b.h)+cameraY;
+    ctx.fillRect(b.x, top, 180, b.h);
+    drawWindowGrid(b.x, top, 180, b.h, 3,3, 'rgba(255,167,38,0.55)', 5, 1.0, b.seed);
+  }
+
+  const waterY=groundLevel+cameraY;
+  const river=ctx.createLinearGradient(0,waterY,0,canvas.height);
+  river.addColorStop(0,'#1E3A5F');
+  river.addColorStop(1,'#0F1C2E');
+  ctx.fillStyle=river;
+  ctx.fillRect(0,waterY,canvas.width,canvas.height-waterY);
+
+  ctx.strokeStyle='rgba(255,255,255,0.35)';
+  ctx.lineWidth=3;
+  for (let i=0;i<8;i++){
+    ctx.beginPath();
+    for (let x=0;x<canvas.width;x+=15){
+      const yy=(waterY+10)+i*30+Math.sin(x*0.08 + Date.now()*0.003 + i)*8;
+      ctx.lineTo(x,yy);
+    }
+    ctx.stroke();
+  }
+
+  if (gameState.splash.active){
+    ctx.save();
+    ctx.globalAlpha = Math.max(0, Math.min(1, gameState.splash.timer/0.6));
+    ctx.strokeStyle='rgba(200,240,255,0.9)';
+    ctx.lineWidth=3;
+    ctx.beginPath(); ctx.arc(gameState.splash.x, gameState.splash.y, 18, 0, Math.PI*2); ctx.stroke();
+    ctx.beginPath(); ctx.arc(gameState.splash.x, gameState.splash.y, 32, 0, Math.PI*2); ctx.stroke();
+    ctx.restore();
+  }
+}
+function drawStudentsOnRoof(){
+  const roofY=school.roofY+cameraY;
+  const students=[
+    {dx:-30, shirt:'#E91E63', skin:'#FFE082'},
+    {dx:0,   shirt:'#2196F3', skin:'#FFCC80'},
+    {dx:30,  shirt:'#4CAF50', skin:'#FFB74D'}
+  ];
+  for (const s of students){
+    const x=launcherX+s.dx;
+    const headY=roofY-18;
+    ctx.fillStyle=s.skin;
+    ctx.beginPath(); ctx.arc(x,headY,8,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle=s.shirt;
+    ctx.fillRect(x-6, headY+8, 12,16);
+    ctx.strokeStyle=s.skin; ctx.lineWidth=3;
+    ctx.beginPath(); ctx.moveTo(x,headY+14); ctx.lineTo(x+10,headY+22); ctx.stroke();
+  }
+}
+function drawLauncher(){
+  const T = I18N[lang];
+  const top=school.top+cameraY;
+  const height=school.height;
+  const bottom=groundLevel+cameraY;
+
+  const grad=ctx.createLinearGradient(launcherX-60, top, launcherX+60, bottom);
+  grad.addColorStop(0,'#1E3A5F'); grad.addColorStop(1,'#2C5F7F');
+  ctx.fillStyle=grad;
+  ctx.fillRect(launcherX-60, top, 120, height);
+  ctx.strokeStyle='#4A90E2'; ctx.lineWidth=2;
+  ctx.strokeRect(launcherX-60, top, 120, height);
+
+  drawWindowGrid(launcherX-60, top, 120, height, 5,2, 'rgba(255,213,79,0.95)', 10, 1.0, 777);
+
+  const roofY=school.roofY+cameraY;
+  ctx.fillStyle='#0F1C2E';
+  ctx.fillRect(launcherX-70, roofY, 140, 15);
+
+  ctx.fillStyle='rgba(102,126,234,0.9)';
+  ctx.fillRect(launcherX-55, top+18, 110, 32);
+  ctx.strokeStyle='#667eea'; ctx.lineWidth=2;
+  ctx.strokeRect(launcherX-55, top+18, 110, 32);
+  ctx.fillStyle='white'; ctx.font='900 12px Arial'; ctx.textAlign='center';
+  ctx.fillText(T.schoolLine1, launcherX, top+33);
+  if (T.schoolLine2) ctx.fillText(T.schoolLine2, launcherX, top+46);
+
+  drawStudentsOnRoof();
+
+  const launchY=school.launchY+cameraY;
+  const arm=ctx.createLinearGradient(launcherX,launchY,launcherX+80,launchY);
+  arm.addColorStop(0,'#667eea'); arm.addColorStop(1,'#764ba2');
+  ctx.strokeStyle=arm; ctx.lineWidth=8; ctx.lineCap='round';
+  ctx.beginPath(); ctx.moveTo(launcherX,launchY); ctx.lineTo(launcherX+80,launchY); ctx.stroke();
+
+  const tension=gameState.v0/35;
+  const spr=ctx.createLinearGradient(launcherX,launchY,launcherX+80,launchY);
+  spr.addColorStop(0,`rgba(102,255,102,${tension})`);
+  spr.addColorStop(0.5,`rgba(255,255,102,${tension})`);
+  spr.addColorStop(1,`rgba(255,102,102,${tension})`);
+  ctx.strokeStyle=spr; ctx.lineWidth=10;
+  ctx.beginPath(); ctx.moveTo(launcherX,launchY+12);
+  for (let i=0;i<8;i++){
+    const off=(i%2===0?12:-12)*tension;
+    ctx.lineTo(launcherX+10*(i+1), launchY+12+off);
+  }
+  ctx.stroke();
+}
+function drawFunnyGrandma(x,y){
+  ctx.fillStyle='#8D6E63'; ctx.fillRect(x-60,y-10,120,8);
+  ctx.fillStyle='#6D4C41'; ctx.fillRect(x-60,y-2,120,8);
+
+  ctx.fillStyle='#9C27B0';
+  ctx.beginPath();
+  ctx.moveTo(x-16,y-8); ctx.lineTo(x+16,y-8);
+  ctx.lineTo(x+24,y+28); ctx.lineTo(x-24,y+28);
+  ctx.closePath(); ctx.fill();
+
+  ctx.fillStyle='#FFECB3';
+  ctx.beginPath(); ctx.arc(x,y-34,14,0,Math.PI*2); ctx.fill();
+
+  ctx.fillStyle='#BDBDBD';
+  ctx.beginPath(); ctx.arc(x+8,y-52,8,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(x,y-44,15,Math.PI,0,true); ctx.fill();
+
+  ctx.strokeStyle='#222'; ctx.lineWidth=3;
+  ctx.beginPath(); ctx.arc(x-6,y-36,6,0,Math.PI*2); ctx.stroke();
+  ctx.beginPath(); ctx.arc(x+6,y-36,6,0,Math.PI*2); ctx.stroke();
+
+  ctx.strokeStyle='#C2185B'; ctx.lineWidth=3;
+  ctx.beginPath(); ctx.arc(x,y-30,7,0,Math.PI); ctx.stroke();
+
+  ctx.strokeStyle='#FFECB3'; ctx.lineWidth=5;
+  ctx.beginPath();
+  ctx.moveTo(x-10,y-10); ctx.lineTo(x-22,y);
+  ctx.moveTo(x+10,y-10); ctx.lineTo(x+22,y);
+  ctx.stroke();
+  ctx.fillStyle='#FFECB3';
+  ctx.beginPath(); ctx.arc(x-22,y,5,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(x+22,y,5,0,Math.PI*2); ctx.fill();
+}
+function drawTarget(){
+  const T = I18N[lang];
+  const bottom=groundLevel+cameraY;
+  const bh=240;
+  const top=bottom-bh;
+  ctx.fillStyle='#5D4037';
+  ctx.fillRect(targetX-55, top, 110, bh);
+  drawWindowGrid(targetX-55, top, 110, bh, 4,2, 'rgba(255,167,38,0.45)', 5, 1.0, 888);
+
+  const handsY=targetY+cameraY;
+  drawFunnyGrandma(targetX, handsY);
+
+  ctx.fillStyle='rgba(255,255,255,0.95)';
+  ctx.fillRect(targetX-64, handsY+12, 128, 20);
+  ctx.fillStyle='#C2185B'; ctx.font='900 13px Arial'; ctx.textAlign='center';
+  ctx.fillText(T.grannyName, targetX, handsY+26);
+
+  if (bubble.active){
+    const a=Math.max(0, Math.min(1, bubble.timer/1.5));
+    drawSpeechBubble(bubble.text, bubble.x, bubble.y, a);
+  }
+}
+function drawPackage(){
+  if (!gameState.moving && !gameState.measured){
+    const lx=launcherX+80;
+    const ly=school.launchY+cameraY;
+    ctx.fillStyle='#FF5722';
+    ctx.fillRect(lx-8, ly-8, 16,16);
+    ctx.fillStyle='white';
+    ctx.fillRect(lx-6, ly-2, 12,4);
+    ctx.fillRect(lx-2, ly-6, 4,12);
+    return;
+  }
+  const px = launcherX + gameState.x*PPM;
+  const py = (school.launchY + gameState.y*PPM) + cameraY;
+
+  ctx.save();
+  ctx.translate(px,py);
+  const ang = Math.atan2(gameState.vy, gameState.vx || 0.0001);
+  ctx.rotate(ang);
+  ctx.fillStyle='#FF5722';
+  ctx.fillRect(-10,-10,20,20);
+  ctx.fillStyle='white';
+  ctx.fillRect(-8,-2,16,4);
+  ctx.fillRect(-2,-8,4,16);
+  ctx.restore();
+}
+
+function waterDropMeters(){ return (groundLevel - school.launchY)/PPM; }
+function bottomDropMeters(){ return (canvas.height - 12 - school.launchY)/PPM; }
+
+/* ===== Physics ===== */
+function updatePhysics(dt){
+  if (!gameStarted || !gameState.moving || dt<=0) return;
+
+  gameState.t += dt;
+
+  if (!gameState.hitWater){
+    gameState.vy += g*dt;
+  }else{
+    const gWater=3.2;
+    gameState.vy += gWater*dt;
+    gameState.vx *= Math.pow(0.82, dt*60);
+    gameState.vy *= Math.pow(0.94, dt*60);
+  }
+
+  gameState.x += gameState.vx*dt;
+  gameState.y += gameState.vy*dt;
+
+  if (gameState.trailRecording && !gameState.hitWater){
+    gameState.trail.push({x:gameState.x, y:gameState.y});
+  }
+
+  const speed = Math.sqrt(gameState.vx*gameState.vx + gameState.vy*gameState.vy);
+  const Ek = 0.5*m*speed*speed;
+  const Ep = m*g*Math.max(0, h - gameState.y);
+  const Em = Ek+Ep;
+  gameState.energyHistory.push({t:gameState.t, Ek, Ep, Em});
+
+  if (!gameState.measured && gameState.y >= h){
+    gameState.measured = true;
+    gameState.measT = gameState.t;
+    gameState.measX = gameState.x;
+
+    const tol = 0.5;
+    const error = gameState.measX - d;
+    const ep = Math.abs(error)/d*100;
+
+    const T = I18N[lang];
+
+    if (Math.abs(error) <= tol){
+      gameState.outcome='success';
+      gameState.success=true;
+
+      gameState.x = d;
+      gameState.y = h;
+      gameState.vx = 0; gameState.vy = 0;
+      gameState.moving = false;
+
+      gameState.trailRecording=false;
+      gameState.trailHold=0;
+
+      bubble.active=true;
+      bubble.text = T.bubbleSuccess;
+      bubble.x = targetX;
+      bubble.y = (targetY+cameraY)-75;
+      bubble.timer = 2.0;
+
+      playSillySound();
+
+      gameState.score = computeScore(gameState.attempts, ep, hintsUsed, calcPenaltyTotal);
+      updateAttemptScoreUI();
+      updateResultDisplay();
+
+      setTimeout(showWinScreen, 900);
+      return;
+    }
+
+    if (error > 0){
+      gameState.outcome='far';
+      gameState.success=false;
+      gameState.moving=false;
+
+      gameState.x = Math.max(gameState.measX, d + 2.0);
+      gameState.y = h + 0.8;
+      gameState.vx = 0; gameState.vy = 0;
+
+      gameState.trailRecording=false;
+      gameState.trailHold=0;
+
+      bubble.active=true;
+      bubble.text = T.bubbleNoWater;
+      bubble.x = targetX;
+      bubble.y = (targetY+cameraY)-75;
+      bubble.timer = 2.0;
+
+      playSillySound();
+      updateResultDisplay();
+      return;
+    }
+
+    gameState.outcome='short';
+    gameState.success=false;
+    gameState.pityOnWater = true;
+    updateResultDisplay();
+  }
+
+  if (!gameState.hitWater && gameState.y >= waterDropMeters()){
+    gameState.hitWater = true;
+
+    if (gameState.trailRecording){
+      gameState.trailRecording=false;
+      gameState.trailHold=0;
+    }
+
+    gameState.splash.active=true;
+    gameState.splash.timer=0.6;
+    gameState.splash.x = launcherX + gameState.x*PPM;
+    gameState.splash.y = (groundLevel+cameraY) + 6;
+
+    const T = I18N[lang];
+    if (gameState.pityOnWater){
+      bubble.active=true;
+      bubble.text = T.bubbleWater;
+      bubble.x = targetX;
+      bubble.y = (targetY+cameraY)-75;
+      bubble.timer = 2.0;
+      gameState.pityOnWater=false;
+    }
+  }
+
+  if (gameState.hitWater && gameState.y >= bottomDropMeters()){
+    gameState.moving=false;
+  }
+}
+
+/* ===== Results ===== */
+function updateResultDisplay(){
+  const T = I18N[lang];
+  const resultText=document.getElementById('resultText');
+  const medalText=document.getElementById('medalText');
+  if (!gameState.measured) return;
+
+  const error = Math.abs(gameState.measX - d);
+  const ep = (error/d*100);
+  const epStr = ep.toFixed(1);
+
+  document.getElementById('measTime').textContent = gameState.measT.toFixed(3);
+  document.getElementById('measDist').textContent = gameState.measX.toFixed(2);
+  document.getElementById('errorPercent').textContent = epStr;
+
+  if (gameState.outcome==='success'){
+    resultText.innerHTML = `<span style="color:#4CAF50;">${T.successMsg}</span><br>
+    x=${gameState.measX.toFixed(2)} m | ${(lang==='el')?'Σφάλμα':(lang==='it')?'Errore':'Error'}=${epStr}%<br>
+    ${(lang==='el')?'Προσπάθειες':(lang==='it')?'Tentativi':'Attempts'}: ${gameState.attempts} |
+    ${(lang==='el')?'Υποδείξεις':(lang==='it')?'Aiuti':'Hints'}: ${hintsUsed} |
+    ${(lang==='el')?'Ποινές v₀':(lang==='it')?'Penalità v₀':'v₀ penalties'}: ${calcPenaltyTotal}<br>
+    <strong>${(lang==='el')?'Βαθμός':(lang==='it')?'Punteggio':'Score'}: ${gameState.score}/100</strong>`;
+    medalText.textContent = medalFromAccuracy(ep) + ' ' + ((lang==='el')
+      ? (ep<=GOLD_MAX?'Χρυσό!':ep<=SILVER_MAX?'Ασημένιο!':'Χάλκινο!')
+      : (lang==='it')
+        ? (ep<=GOLD_MAX?'Oro!':ep<=SILVER_MAX?'Argento!':'Bronzo!')
+        : (ep<=GOLD_MAX?'Gold!':ep<=SILVER_MAX?'Silver!':'Bronze!'));
+  }else if (gameState.outcome==='far'){
+    resultText.innerHTML = `<span style="color:#F44336;">${T.farMsg}</span><br>
+    x=${gameState.measX.toFixed(2)} m (${(lang==='el')?'χρειαζόταν':(lang==='it')?'servivano':'needed'} ${d.toFixed(1)} m)`;
+    medalText.textContent = '';
+  }else if (gameState.outcome==='short'){
+    resultText.innerHTML = `<span style="color:#F44336;">${T.shortMsg}</span><br>
+    x=${gameState.measX.toFixed(2)} m (${(lang==='el')?'χρειαζόταν':(lang==='it')?'servivano':'needed'} ${d.toFixed(1)} m)`;
+    medalText.textContent = '';
+  }
+}
+
+function updateLabDisplay(){
+  if (gameState.energyHistory.length===0) return;
+  const latest = gameState.energyHistory[gameState.energyHistory.length-1];
+  const Em0 = gameState.energyHistory[0].Em || 1;
+  document.getElementById('ekText').textContent = latest.Ek.toFixed(2);
+  document.getElementById('epText').textContent = latest.Ep.toFixed(2);
+  document.getElementById('emText').textContent = latest.Em.toFixed(2);
+  document.getElementById('ekBar').style.width = (latest.Ek/Em0*100)+'%';
+  document.getElementById('epBar').style.width = (latest.Ep/Em0*100)+'%';
+  document.getElementById('emBar').style.width = (latest.Em/Em0*100)+'%';
+  drawGraph();
+}
+function drawGraph(){
+  graphCanvas.width = graphCanvas.width;
+  if (gameState.trail.length<2) return;
+  const pad=26;
+  const w=graphCanvas.width-2*pad;
+  const hG=graphCanvas.height-2*pad;
+  graphCtx.strokeStyle='#333'; graphCtx.lineWidth=1;
+  graphCtx.beginPath();
+  graphCtx.moveTo(pad,pad);
+  graphCtx.lineTo(pad,graphCanvas.height-pad);
+  graphCtx.lineTo(graphCanvas.width-pad,graphCanvas.height-pad);
+  graphCtx.stroke();
+
+  const maxX=Math.max(...gameState.trail.map(p=>p.x), d);
+  graphCtx.strokeStyle='#2196F3'; graphCtx.lineWidth=2;
+  graphCtx.beginPath();
+  for (let i=0;i<gameState.trail.length;i++){
+    const px=pad + (gameState.trail[i].x/maxX)*w;
+    const py=graphCanvas.height-pad - (gameState.trail[i].y/(h+1))*hG;
+    if (i===0) graphCtx.moveTo(px,py); else graphCtx.lineTo(px,py);
+  }
+  graphCtx.stroke();
+
+  graphCtx.strokeStyle='#4CAF50';
+  graphCtx.setLineDash([3,3]);
+  const tx=pad + (d/maxX)*w;
+  graphCtx.beginPath();
+  graphCtx.moveTo(tx,pad);
+  graphCtx.lineTo(tx,graphCanvas.height-pad);
+  graphCtx.stroke();
+  graphCtx.setLineDash([]);
+}
+
+function render(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  drawBackground();
+  drawLauncher();
+  drawTarget();
+  drawTrajectoryTrail();
+  drawPackage();
+}
+
+/* ===== Game loop ===== */
+let lastTime=0;
+function gameLoop(ts){
+  const dtRaw = Math.min((ts-lastTime)/1000, 0.05);
+  lastTime = ts;
+
+  if (storm.flash>0) storm.flash = Math.max(0, storm.flash-dtRaw);
+  else if (gameStarted && Math.random()<0.008) startLightning();
+
+  thunderCooldown = Math.max(0, thunderCooldown - dtRaw);
+
+  let dt=0;
+  if (isPaused){
+    if (stepOnce){ dt=STEP_DT; stepOnce=false; }
+    else dt=0;
+  }else dt = dtRaw*timeScale;
+
+  if (bubble.active){
+    bubble.timer -= dtRaw;
+    if (bubble.timer<=0) bubble.active=false;
+  }
+  if (gameState.splash.active){
+    gameState.splash.timer -= dtRaw;
+    if (gameState.splash.timer<=0) gameState.splash.active=false;
+  }
+
+  if (gameState.trailVisible && !gameState.trailRecording){
+    gameState.trailHold += dtRaw;
+    if (gameState.trailHold>=3){
+      gameState.trailVisible=false;
+      gameState.trail=[];
+    }
+  }
+
+  updatePhysics(dt);
+  render();
+
+  if (gameStarted && (gameState.moving || document.getElementById('labPanel').classList.contains('visible'))){
+    updateLabDisplay();
+  }
+  updateSnapshotUI();
+
+  requestAnimationFrame(gameLoop);
+}
+
+/* ===== Start / Win ===== */
+function startGame(){
+  if (soundEnabled){ try{ getAudioCtx(); }catch(e){} }
+  gameStarted=true;
+  document.getElementById('introScreen').classList.add('hidden');
+  updateTheory();
+  updatePositions();
+  updateStatusUI();
+  updateAttemptScoreUI();
+}
+function showWinScreen(){
+  const T = I18N[lang];
+  const screen=document.getElementById('winScreen');
+  const msg=document.getElementById('winMessage');
+  const medal=document.getElementById('winMedal');
+  const scoreLine=document.getElementById('winScore');
+  const science=document.getElementById('winScience');
+
+  const error=Math.abs(gameState.measX - d);
+  const ep=(error/d*100);
+  const epStr=ep.toFixed(1);
+
+  msg.textContent = T.winMsg;
+
+  const medalEmoji = medalFromAccuracy(ep);
+  medal.textContent = medalEmoji + ' ' + ((lang==='el')
+    ? (ep<=GOLD_MAX?'Χρυσό!':ep<=SILVER_MAX?'Ασημένιο!':'Χάλκινο!')
+    : (lang==='it')
+      ? (ep<=GOLD_MAX?'Oro!':ep<=SILVER_MAX?'Argento!':'Bronzo!')
+      : (ep<=GOLD_MAX?'Gold!':ep<=SILVER_MAX?'Silver!':'Bronze!'));
+
+  const extra=Math.max(0, gameState.attempts-1);
+  const attemptsPts=Math.max(0, 70-7*extra);
+  const tier=medalTierFromError(ep);
+  const accPts=Math.max(0, 30-accuracyPenaltyFromTier(tier));
+
+  const A = (lang==='el')?'Τελικός βαθμός':(lang==='it')?'Punteggio finale':'Final score';
+  const B = (lang==='el')?'Προσπάθειες':(lang==='it')?'Tentativi':'Attempts';
+  const C = (lang==='el')?'Ακρίβεια':(lang==='it')?'Precisione':'Accuracy';
+  const D = (lang==='el')?'Υποδείξεις':(lang==='it')?'Aiuti':'Hints';
+  const E = (lang==='el')?'Ποινές v₀':(lang==='it')?'Penalità v₀':'v₀ penalties';
+
+  scoreLine.innerHTML = `<strong>${A}:</strong> ${gameState.score}/100<br>
+    ${B}: <strong>${attemptsPts}/70</strong> |
+    ${C}: <strong>${accPts}/30</strong> |
+    ${D}: <strong>${hintsUsed}</strong> |
+    ${E}: <strong>${calcPenaltyTotal}</strong>`;
+
+  science.innerHTML = `<strong>📊 ${lang==='el'?'Θεωρία':(lang==='it')?'Teoria':'Theory'}:</strong><br><br>
+    h=${h.toFixed(1)} m, d=${d.toFixed(1)} m<br>
+    t=√(2h/g)=<strong>${t_theory.toFixed(3)} s</strong><br>
+    v₀=d/t=<strong>${v0_theory.toFixed(2)} m/s</strong><br><br>
+    x=<strong>${gameState.measX.toFixed(2)} m</strong><br>
+    ${(lang==='el')?'Σφάλμα':(lang==='it')?'Errore':'Error'}=<strong>${epStr}%</strong>`;
+
+  screen.classList.remove('hidden');
+}
+
+/* ===== Attempts ===== */
+function resetAttempt(){
+  gameState.moving=false;
+  gameState.measured=false;
+  gameState.success=false;
+  gameState.outcome='none';
+  gameState.x=0; gameState.y=0; gameState.vx=0; gameState.vy=0; gameState.t=0;
+  gameState.measT=0; gameState.measX=0;
+  gameState.hitWater=false;
+  gameState.pityOnWater=false;
+  gameState.splash.active=false;
+  gameState.trail=[]; gameState.trailVisible=false; gameState.trailRecording=false; gameState.trailHold=0;
+  gameState.energyHistory=[];
+  bubble.active=false;
+  isPaused=false; stepOnce=false;
+  updateStatusUI();
+  document.getElementById('resultText').innerHTML='';
+  document.getElementById('medalText').textContent='';
+  document.getElementById('measTime').textContent='0';
+  document.getElementById('measDist').textContent='0';
+  document.getElementById('errorPercent').textContent='0';
+}
+
+function launch(){
+  if (!gameStarted) return;
+  if (gameState.moving || gameState.measured) return;
+
+  const T = I18N[lang];
+
+  const pct = Math.abs(gameState.v0 - v0_theory)/v0_theory*100;
+  const v0Penalty = computeV0PenaltyPct(pct);
+  if (v0Penalty > 0){
+    calcPenaltyTotal += v0Penalty;
+    document.getElementById('calcStatus').textContent = T.v0PenaltyMsg(v0Penalty);
+  }else{
+    document.getElementById('calcStatus').textContent =
+      (lang==='el') ? '✅ Πολύ κοντά στο θεωρητικό v₀.' : (lang==='it') ? '✅ Molto vicino al v₀ teorico.' : '✅ Very close to the theoretical v₀.';
+  }
+
+  gameState.attempts++;
+
+  isPaused=false; stepOnce=false; updateStatusUI();
+
+  gameState.moving=true;
+  gameState.measured=false;
+  gameState.success=false;
+  gameState.outcome='none';
+
+  gameState.x=0; gameState.y=0;
+  gameState.vx=gameState.v0; gameState.vy=0;
+  gameState.t=0;
+
+  gameState.hitWater=false;
+  gameState.pityOnWater=false;
+  gameState.splash.active=false;
+
+  gameState.energyHistory=[];
+  gameState.trail=[{x:0,y:0}];
+  gameState.trailVisible=true;
+  gameState.trailRecording=true;
+  gameState.trailHold=0;
+
+  bubble.active=false;
+  document.getElementById('resultText').innerHTML='';
+  document.getElementById('medalText').textContent='';
+
+  updateAttemptScoreUI();
+}
+
+/* ===== Sliders ===== */
+const v0Slider=document.getElementById('v0Slider');
+const hSlider=document.getElementById('hSlider');
+const dSlider=document.getElementById('dSlider');
+
+v0Slider.addEventListener('input', ()=>{
+  if (!gameStarted) return;
+  if (gameState.moving) return;
+  gameState.v0=parseFloat(v0Slider.value);
+  updateTheory();
+});
+hSlider.addEventListener('input', ()=>{
+  if (!gameStarted) return;
+  if (gameState.moving) return;
+  h=parseFloat(hSlider.value);
+  updateTheory();
+  updatePositions();
+});
+dSlider.addEventListener('input', ()=>{
+  if (!gameStarted) return;
+  if (gameState.moving) return;
+  d=parseFloat(dSlider.value);
+  updateTheory();
+  updatePositions();
+});
+
+/* ===== Keyboard (desktop) ===== */
+document.addEventListener('keydown', (e)=>{
+  if (!gameStarted) return;
+
+  const key = e.key;
+  const lower = key.toLowerCase();
+
+  if (key===' ' || key.startsWith('Arrow')) e.preventDefault();
+
+  if (key==='ArrowUp'){
+    if (!gameState.moving && !gameState.measured) gameState.v0=Math.min(40, gameState.v0+0.5);
+    v0Slider.value=String(gameState.v0);
+    updateTheory();
+  }else if (key==='ArrowDown'){
+    if (!gameState.moving && !gameState.measured) gameState.v0=Math.max(5, gameState.v0-0.5);
+    v0Slider.value=String(gameState.v0);
+    updateTheory();
+  }else if (key==='ArrowRight'){
+    if (!gameState.moving){ d=Math.min(50, d+1); dSlider.value=String(d); updateTheory(); updatePositions(); }
+  }else if (key==='ArrowLeft'){
+    if (!gameState.moving){ d=Math.max(5, d-1); dSlider.value=String(d); updateTheory(); updatePositions(); }
+  }else if (lower==='h'){
+    if (!gameState.moving){ h=Math.min(MAX_H, h+0.5); hSlider.value=String(h); updateTheory(); updatePositions(); }
+  }else if (lower==='j'){
+    if (!gameState.moving){ h=Math.max(1, h-0.5); hSlider.value=String(h); updateTheory(); updatePositions(); }
+  }else if (key===' '){
+    launch();
+  }else if (lower==='r'){
+    resetAttempt();
+  }else if (lower==='p'){
+    togglePause();
+  }else if (lower==='s'){
+    toggleSlowMo();
+  }else if (lower==='n'){
+    stepForward();
+  }else if (lower==='l'){
+    toggleLab();
+  }else if (lower==='k'){
+    showHint();
+  }else if (lower==='f'){
+    toggleFullscreen();
+  }else if (lower==='m'){
+    toggleSound();
+  }else if (key==='Enter'){
+    checkStudentV0();
+  }
+});
+
+/* ===== Init ===== */
+function init(){
+  clampInputs();
+  loadLangPreference();
+  applyLanguage();       // sets UI texts + button states
+  updateTheory();
+  updatePositions();
+  updateStatusUI();
+  updateAttemptScoreUI();
+  v0Slider.value=String(gameState.v0);
+  hSlider.value=String(h);
+  dSlider.value=String(d);
+
+  // If remember was on and language was loaded, keep buttons synced
+  refreshLangButtons();
+}
+window.addEventListener('resize', ()=>updatePositions());
+init();
+requestAnimationFrame(gameLoop);
+</script>
+</body>
+</html>
