@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QR Code Generator - Physics Games</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg-primary: #0a0a1a;
+      --bg-secondary: #12122a;
+      --accent-cyan: #00f5ff;
+      --accent-purple: #a855f7;
+      --accent-gold: #ffd700;
+      --text-primary: #f0f6fc;
+      --text-secondary: rgba(240, 246, 252, 0.7);
+      --card-bg: rgba(20, 20, 45, 0.9);
+      --card-border: rgba(255, 255, 255, 0.1);
+    }
+
+    body {
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      padding: 2rem;
+    }
+
+    /* Header */
+    header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .subtitle {
+      color: var(--text-secondary);
+    }
+
+    /* Setup Panel */
+    .setup-panel {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 1.5rem;
+      max-width: 600px;
+      margin: 0 auto 2rem;
+    }
+
+    .setup-panel h2 {
+      font-size: 1.1rem;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .input-group {
+      margin-bottom: 1rem;
+    }
+
+    .input-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+    }
+
+    .input-group input {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-size: 1rem;
+      transition: border-color 0.3s;
+    }
+
+    .input-group input:focus {
+      outline: none;
+      border-color: var(--accent-cyan);
+    }
+
+    .input-group small {
+      display: block;
+      margin-top: 0.5rem;
+      color: var(--text-secondary);
+      font-size: 0.8rem;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 999px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+      color: white;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 0 20px rgba(0, 245, 255, 0.4);
+    }
+
+    .btn-secondary {
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      border: 1px solid var(--card-border);
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--accent-cyan);
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-top: 1rem;
+    }
+
+    /* Language Selector */
+    .lang-selector {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .lang-btn {
+      padding: 0.5rem 1rem;
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      background: var(--bg-primary);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .lang-btn:hover {
+      border-color: var(--accent-cyan);
+    }
+
+    .lang-btn.active {
+      background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+      color: white;
+      border-color: transparent;
+    }
+
+    /* QR Grid */
+    .qr-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1.5rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .qr-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 1.5rem;
+      text-align: center;
+      transition: all 0.3s;
+    }
+
+    .qr-card:hover {
+      border-color: var(--accent-cyan);
+      transform: translateY(-4px);
+    }
+
+    .qr-card.coming-soon {
+      opacity: 0.5;
+    }
+
+    .qr-icon {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .qr-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+
+    .qr-category {
+      font-size: 0.8rem;
+      color: var(--accent-cyan);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 1rem;
+    }
+
+    .qr-image-container {
+      background: white;
+      padding: 1rem;
+      border-radius: 12px;
+      display: inline-block;
+      margin-bottom: 1rem;
+    }
+
+    .qr-image {
+      width: 150px;
+      height: 150px;
+      display: block;
+    }
+
+    .qr-url {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      word-break: break-all;
+      background: var(--bg-primary);
+      padding: 0.5rem;
+      border-radius: 6px;
+      margin-top: 0.5rem;
+    }
+
+    .qr-formulas {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      justify-content: center;
+      margin-top: 0.75rem;
+    }
+
+    .formula-tag {
+      background: rgba(0, 245, 255, 0.1);
+      border: 1px solid rgba(0, 245, 255, 0.3);
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      font-family: 'Courier New', monospace;
+      color: var(--accent-cyan);
+    }
+
+    /* Instructions */
+    .instructions {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 1.5rem;
+      max-width: 600px;
+      margin: 2rem auto;
+    }
+
+    .instructions h3 {
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .instructions ol {
+      margin-left: 1.5rem;
+      color: var(--text-secondary);
+    }
+
+    .instructions li {
+      margin-bottom: 0.5rem;
+    }
+
+    .instructions code {
+      background: var(--bg-primary);
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      color: var(--accent-cyan);
+    }
+
+    /* Print Styles */
+    @media print {
+      body {
+        background: white;
+        color: black;
+        padding: 0.5cm;
+      }
+
+      header, .setup-panel, .instructions, .no-print {
+        display: none !important;
+      }
+
+      .qr-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1cm;
+      }
+
+      .qr-card {
+        background: white;
+        border: 2px solid #333;
+        border-radius: 8px;
+        padding: 0.75cm;
+        page-break-inside: avoid;
+        break-inside: avoid;
+      }
+
+      .qr-card.coming-soon {
+        display: none;
+      }
+
+      .qr-icon {
+        font-size: 1.5rem;
+      }
+
+      .qr-title {
+        font-size: 1rem;
+        color: black;
+      }
+
+      .qr-category {
+        color: #666;
+      }
+
+      .qr-image-container {
+        padding: 0.5cm;
+        border: 1px solid #ddd;
+      }
+
+      .qr-image {
+        width: 3.5cm;
+        height: 3.5cm;
+      }
+
+      .qr-url {
+        font-size: 7pt;
+        color: #666;
+        background: #f5f5f5;
+      }
+
+      .qr-formulas {
+        margin-top: 0.3cm;
+      }
+
+      .formula-tag {
+        background: #f0f0f0;
+        border-color: #ccc;
+        color: #333;
+        font-size: 8pt;
+      }
+
+      @page {
+        size: A4;
+        margin: 1cm;
+      }
+    }
+
+    /* Mobile */
+    @media (max-width: 768px) {
+      body {
+        padding: 1rem;
+      }
+
+      h1 {
+        font-size: 1.5rem;
+      }
+
+      .qr-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .btn-group {
+        flex-direction: column;
+      }
+
+      .btn {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🖨️ QR Code Generator</h1>
+    <p class="subtitle" id="headerSubtitle">Δημιουργήστε QR codes για τα παιχνίδια φυσικής σας</p>
+  </header>
+
+  <!-- Setup Panel -->
+  <div class="setup-panel no-print">
+    <h2>⚙️ <span id="setupTitle">Ρυθμίσεις</span></h2>
+    
+    <!-- Language -->
+    <div class="input-group">
+      <label id="langLabel">Γλώσσα εκτύπωσης:</label>
+      <div class="lang-selector">
+        <button class="lang-btn active" data-lang="el" onclick="setLanguage('el')">🇬🇷 Ελληνικά</button>
+        <button class="lang-btn" data-lang="en" onclick="setLanguage('en')">🇬🇧 English</button>
+        <button class="lang-btn" data-lang="it" onclick="setLanguage('it')">🇮🇹 Italiano</button>
+      </div>
+    </div>
+
+    <!-- Base URL -->
+    <div class="input-group">
+      <label for="baseUrl" id="urlLabel">Διεύθυνση βάσης (Base URL):</label>
+      <input 
+        type="url" 
+        id="baseUrl" 
+        placeholder="https://yourname.github.io/physics-games/"
+        value="https://yourname.github.io/physics-games/"
+      >
+      <small id="urlHelp">Αυτή είναι η διεύθυνση που φιλοξενούνται τα παιχνίδια σας</small>
+    </div>
+
+    <!-- Buttons -->
+    <div class="btn-group">
+      <button class="btn btn-primary" onclick="generateQRCodes()">
+        🔄 <span id="generateBtn">Δημιουργία QR Codes</span>
+      </button>
+      <button class="btn btn-secondary" onclick="window.print()">
+        🖨️ <span id="printBtn">Εκτύπωση</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- QR Codes Grid -->
+  <div class="qr-grid" id="qrGrid">
+    <!-- QR codes will be generated here -->
+  </div>
+
+  <!-- Instructions -->
+  <div class="instructions no-print">
+    <h3>📋 <span id="instructionsTitle">Οδηγίες χρήσης</span></h3>
+    <ol id="instructionsList">
+      <li>Εισάγετε τη διεύθυνση όπου φιλοξενούνται τα παιχνίδια σας</li>
+      <li>Πατήστε "Δημιουργία QR Codes"</li>
+      <li>Πατήστε "Εκτύπωση" για να εκτυπώσετε σε A4</li>
+      <li>Κόψτε τα QR codes και μοιράστε τα στους μαθητές</li>
+      <li>Οι μαθητές σκανάρουν με το κινητό και παίζουν!</li>
+    </ol>
+  </div>
+
+  <script>
+    /* ===== INTERNATIONALIZATION ===== */
+    const I18N = {
+      el: {
+        headerSubtitle: "Δημιουργήστε QR codes για τα παιχνίδια φυσικής σας",
+        setupTitle: "Ρυθμίσεις",
+        langLabel: "Γλώσσα εκτύπωσης:",
+        urlLabel: "Διεύθυνση βάσης (Base URL):",
+        urlHelp: "Αυτή είναι η διεύθυνση που φιλοξενούνται τα παιχνίδια σας",
+        generateBtn: "Δημιουργία QR Codes",
+        printBtn: "Εκτύπωση",
+        instructionsTitle: "Οδηγίες χρήσης",
+        instructions: [
+          "Εισάγετε τη διεύθυνση όπου φιλοξενούνται τα παιχνίδια σας",
+          "Πατήστε \"Δημιουργία QR Codes\"",
+          "Πατήστε \"Εκτύπωση\" για να εκτυπώσετε σε A4",
+          "Κόψτε τα QR codes και μοιράστε τα στους μαθητές",
+          "Οι μαθητές σκανάρουν με το κινητό και παίζουν!"
+        ],
+        comingSoon: "Σύντομα...",
+        scanToPlay: "Σκανάρετε για να παίξετε!",
+        // Categories
+        kinematics: "Κινηματική",
+        statics: "Στατική",
+        dynamics: "Δυναμική",
+        oscillations: "Ταλαντώσεις",
+        electricity: "Ηλεκτρισμός",
+        waves: "Κύματα"
+      },
+      en: {
+        headerSubtitle: "Generate QR codes for your physics games",
+        setupTitle: "Settings",
+        langLabel: "Print language:",
+        urlLabel: "Base URL:",
+        urlHelp: "This is the address where your games are hosted",
+        generateBtn: "Generate QR Codes",
+        printBtn: "Print",
+        instructionsTitle: "How to use",
+        instructions: [
+          "Enter the URL where your games are hosted",
+          "Click \"Generate QR Codes\"",
+          "Click \"Print\" to print on A4 paper",
+          "Cut out the QR codes and distribute to students",
+          "Students scan with their phone and play!"
+        ],
+        comingSoon: "Coming soon...",
+        scanToPlay: "Scan to play!",
+        kinematics: "Kinematics",
+        statics: "Statics",
+        dynamics: "Dynamics",
+        oscillations: "Oscillations",
+        electricity: "Electricity",
+        waves: "Waves"
+      },
+      it: {
+        headerSubtitle: "Genera codici QR per i tuoi giochi di fisica",
+        setupTitle: "Impostazioni",
+        langLabel: "Lingua di stampa:",
+        urlLabel: "URL di base:",
+        urlHelp: "Questo è l'indirizzo dove sono ospitati i tuoi giochi",
+        generateBtn: "Genera codici QR",
+        printBtn: "Stampa",
+        instructionsTitle: "Come usare",
+        instructions: [
+          "Inserisci l'URL dove sono ospitati i tuoi giochi",
+          "Clicca \"Genera codici QR\"",
+          "Clicca \"Stampa\" per stampare su A4",
+          "Ritaglia i codici QR e distribuiscili agli studenti",
+          "Gli studenti scansionano con il telefono e giocano!"
+        ],
+        comingSoon: "Prossimamente...",
+        scanToPlay: "Scansiona per giocare!",
+        kinematics: "Cinematica",
+        statics: "Statica",
+        dynamics: "Dinamica",
+        oscillations: "Oscillazioni",
+        electricity: "Elettricità",
+        waves: "Onde"
+      }
+    };
+
+    /* ===== GAMES DATA ===== */
+    const GAMES = [
+      {
+        id: "launcher",
+        icon: "🎮",
+        category: "all",
+        filename: "index.html",
+        formulas: [],
+        isLauncher: true,
+        title: {
+          el: "🏠 Αρχική Σελίδα",
+          en: "🏠 Home Page",
+          it: "🏠 Pagina Iniziale"
+        }
+      },
+      {
+        id: "projectile-rescue",
+        icon: "🚀",
+        category: "kinematics",
+        filename: "projectile_rescue_lab_desktop_mobile_single_html_file.html",
+        formulas: ["x = v₀t", "y = ½gt²"],
+        title: {
+          el: "Επιχείρηση Διάσωσης",
+          en: "Rescue Mission",
+          it: "Missione di Salvataggio"
+        }
+      },
+      {
+        id: "rescue-game-v2",
+        icon: "🎯",
+        category: "kinematics",
+        filename: "02_rescue_game_FIXED_4.html",
+        formulas: ["x = v₀·t", "t = √(2h/g)"],
+        title: {
+          el: "Διάσωση v2.0",
+          en: "Rescue v2.0",
+          it: "Salvataggio v2.0"
+        }
+      },
+      {
+        id: "bridge-equilibrium",
+        icon: "🌉",
+        category: "statics",
+        filename: "03_bridge_equilibrium_game.html",
+        formulas: ["ΣF = 0", "Στ = 0"],
+        title: {
+          el: "Ισορροπία Γέφυρας",
+          en: "Bridge Equilibrium",
+          it: "Equilibrio del Ponte"
+        }
+      },
+      {
+        id: "pendulum-lab",
+        icon: "🎢",
+        category: "oscillations",
+        filename: null,
+        comingSoon: true,
+        formulas: ["T = 2π√(L/g)"],
+        title: {
+          el: "Εργαστήριο Εκκρεμούς",
+          en: "Pendulum Lab",
+          it: "Laboratorio del Pendolo"
+        }
+      },
+      {
+        id: "ohms-challenge",
+        icon: "⚡",
+        category: "electricity",
+        filename: null,
+        comingSoon: true,
+        formulas: ["V = IR"],
+        title: {
+          el: "Πρόκληση του Ohm",
+          en: "Ohm's Challenge",
+          it: "La Sfida di Ohm"
+        }
+      },
+      {
+        id: "wave-surfer",
+        icon: "🌊",
+        category: "waves",
+        filename: null,
+        comingSoon: true,
+        formulas: ["v = λf"],
+        title: {
+          el: "Σέρφινγκ στα Κύματα",
+          en: "Wave Surfer",
+          it: "Surfista delle Onde"
+        }
+      }
+    ];
+
+    /* ===== STATE ===== */
+    let currentLang = 'el';
+
+    /* ===== FUNCTIONS ===== */
+    function t(key) {
+      return I18N[currentLang][key] || I18N.el[key] || key;
+    }
+
+    function setLanguage(lang) {
+      currentLang = lang;
+      
+      // Update buttons
+      document.querySelectorAll('.lang-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.lang === lang);
+      });
+      
+      // Update UI text
+      document.getElementById('headerSubtitle').textContent = t('headerSubtitle');
+      document.getElementById('setupTitle').textContent = t('setupTitle');
+      document.getElementById('langLabel').textContent = t('langLabel');
+      document.getElementById('urlLabel').textContent = t('urlLabel');
+      document.getElementById('urlHelp').textContent = t('urlHelp');
+      document.getElementById('generateBtn').textContent = t('generateBtn');
+      document.getElementById('printBtn').textContent = t('printBtn');
+      document.getElementById('instructionsTitle').textContent = t('instructionsTitle');
+      
+      // Update instructions list
+      const list = document.getElementById('instructionsList');
+      list.innerHTML = t('instructions').map(item => `<li>${item}</li>`).join('');
+      
+      // Regenerate QR codes with new language
+      generateQRCodes();
+    }
+
+    function generateQRCodes() {
+      const baseUrl = document.getElementById('baseUrl').value.trim();
+      if (!baseUrl) {
+        alert('Please enter a base URL');
+        return;
+      }
+      
+      // Ensure trailing slash
+      const normalizedUrl = baseUrl.endsWith('/') ? baseUrl : baseUrl + '/';
+      
+      const grid = document.getElementById('qrGrid');
+      grid.innerHTML = '';
+      
+      GAMES.forEach(game => {
+        if (game.comingSoon) return; // Skip coming soon games
+        
+        const gameUrl = normalizedUrl + (game.filename || '');
+        const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(gameUrl)}`;
+        
+        const card = document.createElement('div');
+        card.className = 'qr-card' + (game.comingSoon ? ' coming-soon' : '');
+        
+        const formulasHTML = game.formulas.length > 0 
+          ? `<div class="qr-formulas">${game.formulas.map(f => `<span class="formula-tag">${f}</span>`).join('')}</div>`
+          : '';
+        
+        const categoryText = game.isLauncher ? '📚 ' + (currentLang === 'el' ? 'Όλα τα Παιχνίδια' : currentLang === 'en' ? 'All Games' : 'Tutti i Giochi') : t(game.category);
+        
+        card.innerHTML = `
+          <div class="qr-icon">${game.icon}</div>
+          <div class="qr-title">${game.title[currentLang]}</div>
+          <div class="qr-category">${categoryText}</div>
+          <div class="qr-image-container">
+            <img class="qr-image" src="${qrApiUrl}" alt="QR Code for ${game.title[currentLang]}">
+          </div>
+          <div class="qr-url">${gameUrl}</div>
+          ${formulasHTML}
+        `;
+        
+        grid.appendChild(card);
+      });
+    }
+
+    /* ===== INITIALIZATION ===== */
+    document.addEventListener('DOMContentLoaded', () => {
+      // Try to detect language
+      const browserLang = navigator.language.slice(0, 2);
+      if (['el', 'en', 'it'].includes(browserLang)) {
+        currentLang = browserLang;
+        document.querySelectorAll('.lang-btn').forEach(btn => {
+          btn.classList.toggle('active', btn.dataset.lang === currentLang);
+        });
+      }
+      
+      setLanguage(currentLang);
+    });
+  </script>
+</body>
+</html>
