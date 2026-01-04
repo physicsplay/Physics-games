@@ -1,0 +1,2297 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Επιχείρηση Διάσωσης - 2ο Λύκειο Μοσχάτου</title>
+
+<style>
+  :root{
+    --bg:#0f0f1e;
+    --panel:rgba(20,30,50,0.90);
+    --panel2:rgba(80,20,20,0.92);
+    --accent:#4ECDC4;
+    --warn:#FF6B6B;
+    --gold:#FFD700;
+    --muted:#cfd6dd;
+  }
+
+  *{ box-sizing:border-box; margin:0; padding:0; user-select:none; -webkit-tap-highlight-color: transparent; }
+  html,body{ height:100%; width:100%; background:var(--bg); overflow:hidden; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; color:#fff; }
+  body{ display:flex; justify-content:center; align-items:center; padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
+
+  #game-container{
+    position:relative;
+    width:1200px;
+    height:700px;
+    border-radius:14px;
+    overflow:hidden;
+    box-shadow: 0 0 50px rgba(0,0,0,0.55);
+    background:#111427;
+  }
+
+  canvas{
+    display:block;
+    width:100%;
+    height:100%;
+    background:#1a1a2e;
+    touch-action:none; /* critical for mobile dragging without page scroll */
+  }
+
+  /* HUD */
+  .hud-panel{
+    position:absolute;
+    padding:12px;
+    border-radius:10px;
+    backdrop-filter: blur(6px);
+    border: 1px solid rgba(255,255,255,0.10);
+    pointer-events:none;
+    font-size:12px;
+    line-height:1.35;
+  }
+  h2{ font-size:14px; color:var(--gold); margin-bottom:8px; border-bottom:1px solid rgba(255,255,255,0.12); padding-bottom:4px; }
+  h3{ font-size:16px; color:var(--accent); margin-bottom:10px; }
+
+  .hud-top-right{ top:10px; right:10px; background:var(--panel); width:260px; }
+  .hud-bottom-right{ bottom:10px; right:10px; background:var(--panel2); width:240px; border-color: rgba(255, 68, 68, 0.45); }
+  .hud-attempts{ top:10px; left:10px; background: rgba(100,50,0,0.88); width:155px; border-color: rgba(255,165,0,0.45); }
+  .hud-energy{ top:90px; left:10px; background: rgba(80,0,80,0.88); width:155px; border-color: rgba(200,100,255,0.45); }
+  .hud-physics{ bottom:10px; left:10px; background: rgba(0,80,60,0.88); width:320px; border-color: rgba(78,205,196,0.45); }
+
+  .stat-row{ display:flex; justify-content:space-between; margin:6px 0; font-size:12px; gap:10px;}
+  .val{ font-weight:700; color:var(--accent); white-space:nowrap; }
+  .val.danger{ color:var(--warn); font-size:14px; }
+  .val.attempt{ color:#FFA500; font-size:22px; }
+  .water-bar-bg{ width:100%; height:10px; background: rgba(0,0,0,0.5); border-radius:5px; overflow:hidden; margin-top:4px; }
+  .water-bar-fill{ height:100%; background: linear-gradient(90deg, var(--accent), var(--warn), #FF0000); transition: width 0.3s; }
+
+  .formula-box{
+    background: rgba(255,215,0,0.10);
+    padding:8px;
+    border-radius:6px;
+    border-left:3px solid var(--gold);
+    margin-top:8px;
+    font-size:11px;
+  }
+  .formula{ font-family: "Times New Roman", serif; font-size:14px; color:#fff; margin:4px 0; }
+  .hint{ color:var(--accent); font-size:10px; margin-top:5px; }
+
+  @keyframes pulseBorder{
+    0%{ border-color: rgba(255,68,68,0.28); box-shadow: 0 0 15px rgba(255,0,0,0.18); }
+    50%{ border-color: rgba(255,68,68,1); box-shadow: 0 0 30px rgba(255,0,0,0.45); }
+    100%{ border-color: rgba(255,68,68,0.28); box-shadow: 0 0 15px rgba(255,0,0,0.18); }
+  }
+  @keyframes urgentPulse{
+    0%{ background: rgba(80,20,20,0.95); }
+    50%{ background: rgba(150,30,30,0.95); }
+    100%{ background: rgba(80,20,20,0.95); }
+  }
+  .urgent{ animation: urgentPulse 0.55s infinite, pulseBorder 0.55s infinite !important; }
+
+  /* Screens */
+  .screen{
+    position:absolute; inset:0;
+    background: rgba(10,10,15,0.97);
+    display:flex; justify-content:center; align-items:center;
+    z-index:9999;
+    transition: opacity 0.4s;
+  
+    pointer-events:auto;
+  }
+  .screen.hidden{ opacity:0; pointer-events:none; }
+
+  .modal{
+    width:min(700px, calc(100vw - 24px));
+    max-height: min(90vh, 720px);
+    overflow:auto;
+    text-align:center;
+    padding:24px;
+    background: linear-gradient(145deg, #1e1e2f, #252540);
+    border: 2px solid var(--accent);
+    border-radius: 18px;
+    box-shadow: 0 0 40px rgba(78,205,196,0.12);
+  }
+  .modal h1{ color:var(--accent); font-size:30px; margin-bottom:12px; }
+  .modal p{ margin-bottom:10px; color:#d1d1d1; font-size:14px; line-height:1.55; }
+
+  .modal-section{
+    background: rgba(255,255,255,0.05);
+    padding:14px;
+    border-radius: 12px;
+    margin: 12px 0;
+    text-align:left;
+  }
+  .modal-section h4{ color: var(--gold); margin-bottom:10px; }
+
+  .keys{
+    display:inline-block;
+    background:#2e2e2e;
+    padding:2px 6px;
+    border-radius:4px;
+    border-bottom:2px solid #111;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    color:#fff;
+    font-size:12px;
+  }
+
+  /* Difficulty selector */
+  .difficulty-selector{ display:flex; flex-direction:column; gap:10px; margin: 10px 0; }
+  .difficulty-option{
+    display:flex; align-items:center; gap:12px;
+    padding: 12px 14px;
+    background: rgba(255,255,255,0.05);
+    border: 2px solid transparent;
+    border-radius: 12px;
+    cursor:pointer;
+    transition: 0.2s;
+    pointer-events:auto;
+  }
+  .difficulty-option:hover{ background: rgba(255,255,255,0.10); border-color: rgba(255,215,0,0.3); }
+  .difficulty-option.selected{ background: rgba(255,215,0,0.14); border-color: var(--gold); }
+  .difficulty-option input{ transform: scale(1.25); }
+  .difficulty-label{ flex:1; text-align:left; }
+  .difficulty-label strong{ color: var(--gold); display:block; margin-bottom:3px; font-size:13px; }
+  .difficulty-label span{ font-size:11px; color:#a8a8a8; }
+  .difficulty-badge{ display:none; padding:4px 10px; border-radius: 999px; font-size:11px; font-weight:700; }
+  .badge-easy{ background:#2ecc71; color:#000; }
+  .badge-medium{ background:#f39c12; color:#000; }
+  .badge-hard{ background:#e74c3c; color:#fff; }
+
+  /* Buttons */
+  button{
+    background: linear-gradient(135deg, var(--gold), #FFA500);
+    color:#1a1a2e;
+    border:none;
+    padding: 12px 28px;
+    border-radius: 999px;
+    font-size:16px;
+    font-weight:800;
+    cursor:pointer;
+    margin-top: 12px;
+    transition: transform 0.15s, box-shadow 0.15s;
+    pointer-events:auto;
+  
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  button:hover{ transform: scale(1.03); box-shadow: 0 0 18px rgba(255,215,0,0.35); }
+
+  /* Pause panel */
+  .hud-pause{
+    top:50%; left:50%;
+    transform: translate(-50%,-50%);
+    width:min(420px, calc(100vw - 30px));
+    background: rgba(0,100,50,0.95);
+    text-align:center;
+    padding: 18px;
+    border:2px solid var(--accent);
+    pointer-events:auto;
+    z-index: 60;
+  }
+  .hud-pause.hidden{ display:none; }
+  .pause-info{ font-size:13px; color:#e7e7e7; line-height:1.6; }
+  .challenge-box{
+    background: rgba(255,100,100,0.12);
+    border: 1px solid var(--warn);
+    padding:10px;
+    border-radius:10px;
+    margin-top:10px;
+  }
+
+  .success-stat{
+    display:inline-block;
+    background: rgba(78,205,196,0.18);
+    padding: 6px 14px;
+    border-radius:999px;
+    margin: 6px 4px;
+    font-size:13px;
+  }
+
+  .medal{
+    font-size:78px;
+    margin: 16px 0;
+    text-shadow: 0 0 30px rgba(255,215,0,0.35);
+  }
+  .medal-gold{ color: var(--gold); }
+  .medal-silver{ color:#C0C0C0; }
+  .medal-bronze{ color:#CD7F32; }
+
+  .energy-indicator{ font-size:11px; padding:3px 10px; border-radius:999px; display:inline-block; font-weight:800; }
+  .energy-100{ background:#2ecc71; color:#000; }
+  .energy-90{ background:#f39c12; color:#000; }
+  .energy-80{ background:#e74c3c; color:#fff; }
+
+  /* Mobile controls */
+  #mobileControls{
+    position:absolute;
+    left:50%;
+    transform: translateX(-50%);
+    bottom: 10px;
+    display:flex;
+    gap:10px;
+    z-index: 80;
+    pointer-events:auto;
+  }
+  .mbtn{
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.18);
+    color:#fff;
+    padding: 10px 14px;
+    border-radius: 999px;
+    font-weight:800;
+    font-size: 14px;
+    backdrop-filter: blur(6px);
+    cursor:pointer;
+  }
+  .mbtn.primary{ background: rgba(78,205,196,0.22); border-color: rgba(78,205,196,0.35); }
+  .mbtn.warn{ background: rgba(255,107,107,0.18); border-color: rgba(255,107,107,0.35); }
+
+  #hudToggle{
+    position:absolute;
+    top:10px; right:10px;
+    z-index: 90;
+    pointer-events:auto;
+    display:none;
+  }
+
+  /* Language picker */
+  .lang-row{
+    display:flex;
+    gap:10px;
+    justify-content:center;
+    flex-wrap:wrap;
+    margin-top: 6px;
+  }
+  .lang-btn{
+    pointer-events:auto;
+    cursor:pointer;
+    border: 1px solid rgba(255,255,255,0.18);
+    background: rgba(255,255,255,0.06);
+    color:#fff;
+    padding: 8px 12px;
+    border-radius: 999px;
+    font-weight:800;
+    font-size: 13px;
+    transition: 0.15s;
+  }
+  .lang-btn.selected{ border-color: rgba(255,215,0,0.7); background: rgba(255,215,0,0.14); }
+
+  
+
+  .mode-btn{
+    pointer-events:auto;
+    cursor:pointer;
+    border: 1px solid rgba(255,255,255,0.18);
+    background: rgba(255,255,255,0.06);
+    color:#fff;
+    padding: 8px 12px;
+    border-radius: 999px;
+    font-weight:800;
+    font-size: 13px;
+    transition: 0.15s;
+  }
+  .mode-btn.selected{ border-color: rgba(255,215,0,0.7); background: rgba(255,215,0,0.14); }
+
+/* Responsive */
+  @media (max-width: 900px){
+    .hud-physics{ width: 290px; }
+    .hud-top-right{ width: 240px; }
+  }
+  @media (max-width: 760px){
+    body{ align-items: stretch; }
+    #game-container{ border-radius: 0; width:100vw; height: 100vh; }
+    .hud-top-right, .hud-physics{ display:none; }
+    #hudToggle{ display:block; }
+    .hud-attempts{ width: 140px; }
+    .hud-energy{ width: 140px; }
+    .hud-bottom-right{ width: 210px; }
+    .hud-panel{ font-size: 11px; padding: 10px; }
+    h2{ font-size: 13px; }
+    #mobileControls{ bottom: 12px; }
+  }
+</style>
+</head>
+
+<body>
+<div id="game-container">
+  <canvas id="canvas" width="1200" height="700" aria-label="Rescue game canvas"></canvas>
+
+  <!-- HUD: Attempts -->
+  <div class="hud-panel hud-attempts" id="hudAttempts">
+    <h2 id="lblAttemptsTitle">🎯 Προσπάθειες</h2>
+    <div style="text-align:center;">
+      <span class="val attempt" id="attemptDisp">0</span>
+    </div>
+    <div style="text-align:center; margin-top:6px; font-size:11px; color:#fff;">
+      <span id="lblScoreMini">Βαθμός:</span>
+      <span class="val" id="scoreMini">100</span>
+    </div>
+  </div>
+
+  <!-- HUD: Energy -->
+  <div class="hud-panel hud-energy" id="hudEnergy">
+    <h2 id="lblEnergyTitle">⚡ Ενέργεια</h2>
+    <div style="text-align:center;">
+      <span class="energy-indicator" id="energyIndicator">100%</span>
+      <div style="font-size:10px; color:#bbb; margin-top:5px;" id="energyDesc">Χωρίς απώλειες</div>
+    </div>
+  </div>
+
+  <!-- HUD: Control / Measurements -->
+  <div class="hud-panel hud-top-right" id="hudControl">
+    <h2 id="lblControlTitle">⚙️ Έλεγχος</h2>
+    <div id="controlHelp" style="font-size:11px; color:#ddd; margin-bottom:8px;"></div>
+
+    <div style="background: rgba(78,205,196,0.10); padding:8px; border-radius:8px; border-left:2px solid var(--accent);">
+      <strong id="lblMeasurements" style="color:var(--accent); font-size:11px;">📊 Μετρήσεις:</strong>
+      <table style="width:100%; font-size:11px; margin-top:6px;">
+        <tr><td id="lblHorizDist">Οριζόντια απόσταση:</td><td style="text-align:right; color:var(--gold);"><strong id="distDisplay">10.0 m</strong></td></tr>
+        <tr><td id="lblRopeLen">Μήκος σχοινιού (L):</td><td style="text-align:right; color:var(--gold);"><strong id="ropeDisplay">8.0 m</strong></td></tr>
+        <tr><td id="lblChildHeight">Ύψος παιδιού:</td><td style="text-align:right; color:var(--gold);"><strong id="childHeightDisplay">4.0 m</strong></td></tr>
+      </table>
+    </div>
+
+    <div style="background: rgba(255,165,0,0.10); padding:8px; border-radius:8px; margin-top:10px; border-left:2px solid #FFA500;">
+      <strong id="lblAngles" style="color:#FFA500; font-size:11px;">📐 Γωνίες & Ταχύτητες:</strong>
+      <table style="width:100%; font-size:11px; margin-top:6px;">
+        <tr><td id="lblRopeAngle">Γωνία σχοινιού θ:</td><td style="text-align:right; color:#fff;"><strong id="angleDisplay">0°</strong></td></tr>
+        <tr><td id="lblSpeed">Ταχύτητα v:</td><td style="text-align:right; color:#fff;"><strong id="speedDisplay">0.0 m/s</strong></td></tr>
+        <tr><td id="lblReleaseAngle">Γωνία άφεσης:</td><td style="text-align:right; color:var(--warn);"><strong id="releaseAngleDisplay">-</strong></td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- HUD: Physics -->
+  <div class="hud-panel hud-physics" id="hudPhysics">
+    <h2 id="lblPhysicsTitle">📚 Φυσική Εκκρεμούς</h2>
+
+    <div class="formula-box">
+      <div class="formula" id="f1">E<sub>κιν</sub> = η × E<sub>δυν,αρχ</sub></div>
+      <div class="formula" id="f2">½mv² = η × mgh₀</div>
+      <div class="hint" id="etaHint">η = συντελεστής διατήρησης ενέργειας (<span id="etaDisplay">1.00</span>)</div>
+    </div>
+
+    <div class="formula-box" style="margin-top:8px;">
+      <div class="formula" id="f3">v = √(2ηgL(1 - cosθ₀))</div>
+      <div class="hint" id="f3hint">Ταχύτητα στο κατώτατο σημείο</div>
+    </div>
+
+    <div class="formula-box" style="margin-top:8px;">
+      <div class="hint" id="didacticHint">
+        🧠 Ιδέα: Διάλεξε αρχική γωνία θ₀, βρες τη θεωρητική v και μετά άφησε στη σωστή στιγμή.
+      </div>
+    </div>
+  </div>
+
+  <!-- HUD: Danger -->
+  <div class="hud-panel hud-bottom-right" id="dangerPanel">
+    <h2 id="lblDangerTitle">🚨 ΚΙΝΔΥΝΟΣ - ΠΛΗΜΜΥΡΑ!</h2>
+    <div class="stat-row"><span id="lblTime">⏱️ Χρόνος:</span><span class="val" id="timeDisp">0:00</span></div>
+    <div class="stat-row"><span id="lblWater">🌊 Στάθμη:</span><span class="val danger" id="waterDisp">2.00 m</span></div>
+    <div class="water-bar-bg"><div class="water-bar-fill" id="waterBar" style="width:50%"></div></div>
+    <div id="lblRiseRate" style="font-size:11px; color:#ffb3b3; margin-top:8px; text-align:center;">⚠️ Ανεβαίνει 25cm/λεπτό!</div>
+    <div class="stat-row" style="margin-top:6px;"><span id="lblChildAt">🎯 Παιδί στα:</span><span class="val" style="color:#fff" id="childAtDisp">4.0 m</span></div>
+  </div>
+
+  <!-- Mobile: HUD toggle -->
+  <button id="hudToggle" class="mbtn" type="button">ℹ️</button>
+
+  <!-- Mobile controls -->
+  <div id="mobileControls" aria-label="Mobile controls">
+    <button class="mbtn" id="btnPause" type="button">⏸︎</button>
+    <button class="mbtn primary" id="btnRelease" type="button">🚀</button>
+    <button class="mbtn warn" id="btnReset" type="button">↺</button>
+  </div>
+
+  <!-- Pause Panel -->
+  <div class="hud-panel hud-pause hidden" id="pausePanel">
+    <h3 id="pauseTitle">⏸️ ΠΑΥΣΗ - Ώρα για Υπολογισμούς!</h3>
+    <div class="pause-info">
+      <table style="width:100%; font-size:14px;">
+        <tr><td id="lblPauseAngle">Αρχική γωνία θ₀:</td><td style="text-align:right; color:var(--gold);"><strong id="pauseAngle">0°</strong></td></tr>
+        <tr><td id="lblPauseEta">Συντελεστής η:</td><td style="text-align:right; color:var(--gold);"><strong id="pauseEta">1.00</strong></td></tr>
+        <tr><td id="lblPauseSpeed">Τρέχουσα ταχύτητα:</td><td style="text-align:right; color:var(--gold);"><strong id="pauseSpeed">0 m/s</strong></td></tr>
+        <tr><td id="lblPauseDist">Οριζόντια απόσταση:</td><td style="text-align:right; color:var(--gold);"><strong id="pauseDist">10 m</strong></td></tr>
+      </table>
+      <hr style="border:0; border-top:1px solid rgba(255,255,255,0.2); margin:14px 0;">
+      <div class="challenge-box">
+        <strong id="lblCalc" style="color:var(--warn);">🤔 Υπολόγισε:</strong><br>
+        <span style="font-size:12px;" id="calcLine">v = √(2 × <span id="calcEta">1.00</span> × 9.81 × 8 × (1 - cos(<span id="calcAngle">0</span>°)))</span>
+      </div>
+    </div>
+    <button id="btnResume" type="button">▶️ Συνέχεια</button>
+  </div>
+
+  <!-- Intro Screen -->
+  <div class="screen" id="introScreen">
+    <div class="modal">
+      <h1 id="introTitle">🌊 ΕΠΙΧΕΙΡΗΣΗ ΔΙΑΣΩΣΗΣ</h1>
+
+      <div class="modal-section" style="text-align:center;">
+        <h4 id="langTitle" style="text-align:center;">🌍 Γλώσσα</h4>
+        <div class="lang-row">
+          <button type="button" class="lang-btn selected" id="langEl" data-action="lang" data-value="el">Ελληνικά</button>
+          <button type="button" class="lang-btn" id="langEn" data-action="lang" data-value="en">English</button>
+          <button type="button" class="lang-btn" id="langIt" data-action="lang" data-value="it">Italiano</button>
+        </div>
+        <p id="schoolLine" style="margin-top:10px; color:var(--gold); font-size:18px;"><strong>2ο Λύκειο Μοσχάτου</strong></p>
+      </div>
+
+
+      <div class="modal-section" style="text-align:center;">
+        <h4 id="modeTitle" style="text-align:center;">🎯 Mode</h4>
+        <div class="lang-row">
+          <button type="button" class="mode-btn selected" id="modeManual" data-action="mode" data-value="manual">Manual release</button>
+          <button type="button" class="mode-btn" id="modeAuto" data-action="mode" data-value="auto">Auto release</button>
+        </div>
+        <p id="modeNote" style="margin-top:10px; color:var(--muted); font-size:12px; line-height:1.35;"></p>
+      </div>
+
+      <div class="modal-section" style="text-align:center;">
+        <h4 id="windowTitle" style="text-align:center;">🪟 Target window</h4>
+        <div class="lang-row">
+          <button type="button" class="mode-btn selected" id="winNormal" data-action="window" data-value="normal">Normal (easy)</button>
+          <button type="button" class="mode-btn" id="winSmall" data-action="window" data-value="small">Small (difficult)</button>
+          <button type="button" class="mode-btn" id="winThird" data-action="window" data-value="third">1/3 (extreme)</button>
+        </div>
+        <p id="windowNote" style="margin-top:10px; color:var(--muted); font-size:12px; line-height:1.35;"></p>
+      </div>
+
+
+
+      <div class="modal-section">
+        <h4 id="scenarioHdr">🎮 Το Σενάριο</h4>
+        <p id="scenarioBody" style="font-size:13px; margin:0;"></p>
+      </div>
+
+      <div class="modal-section">
+        <h4 id="difficultyHdr">⚡ Επίπεδο Φυσικής - Απώλειες Ενέργειας</h4>
+        <div class="difficulty-selector">
+          <label class="difficulty-option selected" id="diff1">
+            <input type="radio" name="difficulty" value="1.0" checked />
+            <div class="difficulty-label">
+              <strong id="d1t">Ιδανικές Συνθήκες (η = 1.00)</strong>
+              <span id="d1s">0% απώλεια - Πλήρης διατήρηση μηχανικής ενέργειας</span>
+            </div>
+            <span class="difficulty-badge badge-easy" id="d1b">Εύκολο</span>
+          </label>
+
+          <label class="difficulty-option" id="diff2">
+            <input type="radio" name="difficulty" value="0.9" />
+            <div class="difficulty-label">
+              <strong id="d2t">Μικρές Απώλειες (η = 0.90)</strong>
+              <span id="d2s">10% απώλεια λόγω τριβών & αντίστασης αέρα</span>
+            </div>
+            <span class="difficulty-badge badge-medium" id="d2b">Μέτριο</span>
+          </label>
+
+          <label class="difficulty-option" id="diff3">
+            <input type="radio" name="difficulty" value="0.8" />
+            <div class="difficulty-label">
+              <strong id="d3t">Ρεαλιστικές Απώλειες (η = 0.80)</strong>
+              <span id="d3s">20% απώλεια - Πιο κοντά στην πραγματικότητα</span>
+            </div>
+            <span class="difficulty-badge badge-hard" id="d3b">Δύσκολο</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="modal-section">
+        <h4 id="scoringHdr">📌 Βαθμολογία (100 = άριστα)</h4>
+        <p id="scoringBody" style="font-size:12px; margin:0;"></p>
+      </div>
+
+      <div class="modal-section">
+        <h4 id="medalsHdr">🏅 Μετάλλια</h4>
+        <p id="medalsBody" style="font-size:12px; margin:0;"></p>
+      </div>
+
+      <div class="modal-section">
+        <h4 id="howtoHdr">📖 Πώς παίζεται</h4>
+        <p id="howtoBody" style="font-size:12px; margin:0;"></p>
+      </div>
+
+      <button id="startBtn" type="button" data-action="start">🚨 ΕΝΑΡΞΗ ΑΠΟΣΤΟΛΗΣ</button>
+      <p id="audioNote" style="font-size:12px; color:#aab; margin-top:8px;">🔊 Για να ακούσεις ήχους, πάτησε “Έναρξη” μία φορά.</p>
+    </div>
+  </div>
+
+  <!-- End Screen -->
+  <div class="screen hidden" id="endScreen">
+    <div class="modal">
+      <h1 id="endTitle">ΤΙΤΛΟΣ</h1>
+      <div id="endMedal" class="medal"></div>
+      <div id="endMessage">Μήνυμα</div>
+      <button id="btnRestart" type="button">🔄 Νέα Προσπάθεια</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =========================
+   MULTI-LANGUAGE STRINGS
+   ========================= */
+const I18N = {
+  el: {
+    docLang: "el",
+    title: "Επιχείρηση Διάσωσης - 2ο Λύκειο Μοσχάτου",
+    introTitle: "🌊 ΕΠΙΧΕΙΡΗΣΗ ΔΙΑΣΩΣΗΣ",
+    langTitle: "🌍 Γλώσσα",
+    modeTitle: "🎯 Τρόπος Παιχνιδιού",
+modeManual: "Χειροκίνητη Άφεση",
+modeAuto: "Αυτόματη άφεση (οριζόντια ταχύτητα)",
+modeNote: "Χειροκίνητα: εσύ διαλέγεις πότε θα αφήσεις το σχοινί. Αυτόματα: το σχοινί αφήνει μόνο του όταν η κίνηση γίνει οριζόντια (στο χαμηλότερο σημείο).",
+    windowTitle: "🪟 Παράθυρο στόχου",
+    winNormal: "Normal (easy)",
+    winSmall: "Small (difficult)",
+        winThird: "1/3 (extreme)",
+windowNote: "Normal: μεγαλύτερο άνοιγμα. Small: μισό μέγεθος. 1/3: πολύ μικρό (εξαιρετικά δύσκολο).",
+
+    schoolLine: "2ο Λύκειο Μοσχάτου",
+    scenarioHdr: "🎮 Το Σενάριο",
+    scenarioBody:
+      "<strong style='color:#FF6B6B;'>ΕΚΤΑΚΤΟ!</strong> Έντονη καταιγίδα και πλημμύρα στην περιοχή.<br>" +
+      "Η στάθμη του νερού ανεβαίνει με <strong>25 cm/λεπτό</strong>!<br>" +
+      "Ένα παιδί είναι εγκλωβισμένο σε ύψος <strong>4 m</strong>. Σώσε το με σωστό timing!",
+    difficultyHdr: "⚡ Επίπεδο Φυσικής - Απώλειες Ενέργειας",
+    d1t: "Ιδανικές Συνθήκες (η = 1.00)",
+    d1s: "0% απώλεια - Πλήρης διατήρηση μηχανικής ενέργειας",
+    d1b: "",
+    d2t: "Μικρές Απώλειες (η = 0.90)",
+    d2s: "10% απώλεια λόγω τριβών & αντίστασης αέρα",
+    d2b: "",
+    d3t: "Ρεαλιστικές Απώλειες (η = 0.80)",
+    d3s: "20% απώλεια - Πιο κοντά στην πραγματικότητα",
+    d3b: "",
+    scoringHdr: "📌 Βαθμολογία (100 = άριστα)",
+    scoringBody:
+      "Η βαθμολογία δίνει βάρος στις σωστές επιλογές (όχι στο “δοκιμάζω με το μάτι”).<br>" +
+      "• <strong>70%</strong>: προσπάθειες → κάθε αποτυχημένη προσπάθεια αφαιρεί <strong>10</strong> μονάδες.<br>" +
+      "• <strong>30%</strong>: ακρίβεια επιτυχίας → χρυσό: −0, ασημένιο: −8, χάλκινο: −16.<br>" +
+      "Ο τελικός βαθμός εμφανίζεται στο τέλος.",
+    medalsHdr: "🏅 Μετάλλια",
+    medalsBody:
+      "🥇 Χρυσό: πολύ κοντά στο παιδί<br>" +
+      "🥈 Ασημένιο: καλή προσέγγιση<br>" +
+      "🥉 Χάλκινο: επιτυχία μέσα στο άνοιγμα<br>" +
+      "<span style='color:#aab;'>Ναι, είναι λίγο “gaming”. Επίτηδες 🙂</span>",
+    howtoHdr: "📖 Πώς παίζεται",
+    howtoBody:
+      "1) <strong>Σύρε</strong> τον διασώστη σε αρχική γωνία θ₀.<br>" +
+      "2) (Προαιρετικά) Υπολόγισε την ταχύτητα από: <span class='keys'>v = √(2ηgL(1−cosθ₀))</span><br>" +
+      "3) Άφησε και άσε να αιωρηθεί. Πάτησε <span class='keys'>SPACE</span> ή το κουμπί <strong>🚀</strong> για άφεση.<br>" +
+      "4) <span class='keys'>P</span> ή ⏸︎ για παύση, <span class='keys'>R</span> ή ↺ για επαναφορά.",
+    audioNote: "🔊 Για να ακούσεις ήχους, πάτησε “Έναρξη” μία φορά.",
+    /* HUD */
+    lblAttemptsTitle: "🎯 Προσπάθειες",
+    lblScoreMini: "Βαθμός:",
+    lblEnergyTitle: "⚡ Ενέργεια",
+    energyIdeal: "Ιδανικές συνθήκες",
+    energyLoss10: "10% απώλειες",
+    energyLoss20: "20% απώλειες",
+    lblControlTitle: "⚙️ Έλεγχος",
+    controlHelpDesktop:
+      "🖱️ <strong>Σύρε & Άσε</strong> για αιώρηση<br>" +
+      "<span class='keys'>SPACE</span> άφεση | <span class='keys'>R</span> επαναφορά | <span class='keys'>P</span> παύση",
+    controlHelpTouch:
+      "👆 <strong>Σύρε</strong> για να δώσεις αρχική γωνία<br>" +
+      "⏸︎ παύση | 🚀 άφεση | ↺ επαναφορά",
+    lblMeasurements: "📊 Μετρήσεις:",
+    lblHorizDist: "Οριζόντια απόσταση:",
+    lblRopeLen: "Μήκος σχοινιού (L):",
+    lblChildHeight: "Ύψος παιδιού:",
+    lblAngles: "📐 Γωνίες & Ταχύτητες:",
+    lblRopeAngle: "Γωνία σχοινιού θ:",
+    lblSpeed: "Ταχύτητα v:",
+    lblReleaseAngle: "Γωνία άφεσης:",
+    lblPhysicsTitle: "📚 Φυσική Εκκρεμούς",
+    etaHintPrefix: "η = συντελεστής διατήρησης ενέργειας",
+    f3hint: "Ταχύτητα στο κατώτατο σημείο",
+    didacticHint: "🧠 Ιδέα: Διάλεξε θ₀ → βρες θεωρητική v → άφησε στη σωστή στιγμή.",
+    lblDangerTitle: "🚨 ΚΙΝΔΥΝΟΣ - ΠΛΗΜΜΥΡΑ!",
+    lblTime: "⏱️ Χρόνος:",
+    lblWater: "🌊 Στάθμη:",
+    lblRiseRate: "⚠️ Ανεβαίνει 25cm/λεπτό!",
+    lblChildAt: "🎯 Παιδί στα:",
+    pauseTitle: "⏸️ ΠΑΥΣΗ - Ώρα για Υπολογισμούς!",
+    btnResume: "▶️ Συνέχεια",
+    lblPauseAngle: "Αρχική γωνία θ₀:",
+    lblPauseEta: "Συντελεστής η:",
+    lblPauseSpeed: "Τρέχουσα ταχύτητα:",
+    lblPauseDist: "Οριζόντια απόσταση:",
+    lblCalc: "🤔 Υπολόγισε:",
+    /* In-canvas speech */
+    childHelp: "ΒΟΗΘΕΙΑ!",
+    ouchBig: "ΆΟΥΤΣ!",
+    ouchSmall: "💥 Χτύπησες στο κτίριο!",
+    /* End screen */
+    restart: "🔄 Νέα Προσπάθεια",
+    endPerfect: "🏆 ΤΕΛΕΙΑ ΔΙΑΣΩΣΗ!",
+    endGreat: "🎉 ΕΞΑΙΡΕΤΙΚΗ ΔΙΑΣΩΣΗ!",
+    endOk: "✅ ΕΠΙΤΥΧΗΣ ΔΙΑΣΩΣΗ!",
+    endFail: "😢 ΑΠΟΤΥΧΙΑ",
+    medalGold: "ΧΡΥΣΟ ΜΕΤΑΛΛΙΟ!",
+    medalSilver: "ΑΣΗΜΕΝΙΟ ΜΕΤΑΛΛΙΟ!",
+    medalBronze: "ΧΑΛΚΙΝΟ ΜΕΤΑΛΛΙΟ!",
+    statsAttempts: "🎯 Προσπάθειες",
+    statsTime: "⏱️ Χρόνος",
+    statsWater: "🌊 Στάθμη",
+    physicsAnalysis: "📊 Ανάλυση Φυσικής",
+    a0: "Αρχική γωνία θ₀",
+    eta: "Συντελεστής η",
+    theoV: "Θεωρητική v_max",
+    relAngle: "Γωνία άφεσης",
+    scoreFinal: "📌 Τελικός βαθμός",
+    failMsg1: "Το νερό έφτασε στα 4 m...",
+    failMsg2: "Το παιδί δεν πρόλαβες να το σώσεις.",
+    tipHdr: "💡 Συμβουλή",
+    tipBody:
+      "Με η = {eta}, χρειάζεσαι αρκετά μεγάλη αρχική γωνία για να αποκτήσεις ταχύτητα.<br>" +
+      "Χρησιμοποίησε: <span class='keys'>v = √(2ηgL(1−cosθ₀))</span><br>" +
+      "Πάτα ⏸︎ για να “παγώσεις” την κατάσταση και να υπολογίσεις.",
+    settingsHdr: "🧾 Αρχικές επιλογές",
+    settingsLoss: "Απώλειες ενέργειας",
+    settingsWindow: "Μέγεθος παραθύρου",
+    settingsMode: "Άφεση σχοινιού",
+    startBtn: "🚨 ΕΝΑΡΞΗ ΑΠΟΣΤΟΛΗΣ",
+
+  },
+
+  en: {
+    docLang: "en",
+    title: "Rescue Mission - Our School",
+    introTitle: "🌊 RESCUE MISSION",
+    langTitle: "🌍 Language",
+    modeTitle: "🎯 Game mode",
+modeManual: "Manual release",
+modeAuto: "Auto-release (horizontal velocity)",
+modeNote: "Manual: you choose when to release the rope. Auto: the rope releases automatically when the motion becomes horizontal (at the lowest point).",
+    windowTitle: "🪟 Target window",
+    winNormal: "Normal (easy)",
+    winSmall: "Small (difficult)",
+        winThird: "1/3 (extreme)",
+windowNote: "Normal: larger opening. Small: half-size. 1/3: tiny (extreme).",
+
+    schoolLine: "Our School",
+    scenarioHdr: "🎮 The scenario",
+    scenarioBody:
+      "<strong style='color:#FF6B6B;'>EMERGENCY!</strong> A severe storm is flooding the area.<br>" +
+      "The water level rises at <strong>25 cm per minute</strong>!<br>" +
+      "A child is trapped at a height of <strong>4 m</strong>. Save them with good timing!",
+    difficultyHdr: "⚡ Physics level - Energy losses",
+    d1t: "Ideal conditions (η = 1.00)",
+    d1s: "0% loss - mechanical energy fully conserved",
+    d1b: "",
+    d2t: "Small losses (η = 0.90)",
+    d2s: "10% loss due to friction & air resistance",
+    d2b: "",
+    d3t: "Realistic losses (η = 0.80)",
+    d3s: "20% loss - closer to real life",
+    d3b: "",
+    scoringHdr: "📌 Scoring (100 = best)",
+    scoringBody:
+      "This score rewards smart choices (not “trial and error”).<br>" +
+      "• <strong>70%</strong>: attempts → each failed attempt subtracts <strong>10</strong> points.<br>" +
+      "• <strong>30%</strong>: success accuracy → gold: −0, silver: −8, bronze: −16.<br>" +
+      "Your final score appears at the end.",
+    medalsHdr: "🏅 Medals",
+    medalsBody:
+      "🥇 Gold: very close to the child<br>" +
+      "🥈 Silver: good approach<br>" +
+      "🥉 Bronze: success inside the opening<br>" +
+      "<span style='color:#aab;'>Yes, it’s a bit “gamey”. On purpose 🙂</span>",
+    howtoHdr: "📖 How to play",
+    howtoBody:
+      "1) <strong>Drag</strong> the rescuer to choose the initial angle θ₀.<br>" +
+      "2) (Optional) Compute speed with: <span class='keys'>v = √(2ηgL(1−cosθ₀))</span><br>" +
+      "3) Release to swing. Press <span class='keys'>SPACE</span> or the <strong>🚀</strong> button to let go.<br>" +
+      "4) <span class='keys'>P</span> or ⏸︎ to pause, <span class='keys'>R</span> or ↺ to reset.",
+    audioNote: "🔊 To enable sounds, press “Start” once.",
+    /* HUD */
+    lblAttemptsTitle: "🎯 Attempts",
+    lblScoreMini: "Score:",
+    lblEnergyTitle: "⚡ Energy",
+    energyIdeal: "Ideal conditions",
+    energyLoss10: "10% losses",
+    energyLoss20: "20% losses",
+    lblControlTitle: "⚙️ Controls",
+    controlHelpDesktop:
+      "🖱️ <strong>Drag & release</strong> to start swinging<br>" +
+      "<span class='keys'>SPACE</span> release | <span class='keys'>R</span> reset | <span class='keys'>P</span> pause",
+    controlHelpTouch:
+      "👆 <strong>Drag</strong> to set the initial angle<br>" +
+      "⏸︎ pause | 🚀 release | ↺ reset",
+    lblMeasurements: "📊 Measurements:",
+    lblHorizDist: "Horizontal distance:",
+    lblRopeLen: "Rope length (L):",
+    lblChildHeight: "Child height:",
+    lblAngles: "📐 Angles & speed:",
+    lblRopeAngle: "Rope angle θ:",
+    lblSpeed: "Speed v:",
+    lblReleaseAngle: "Release angle:",
+    lblPhysicsTitle: "📚 Pendulum physics",
+    etaHintPrefix: "η = energy retention factor",
+    f3hint: "Speed at the lowest point",
+    didacticHint: "🧠 Idea: pick θ₀ → compute v → release at the right moment.",
+    lblDangerTitle: "🚨 DANGER - FLOOD!",
+    lblTime: "⏱️ Time:",
+    lblWater: "🌊 Level:",
+    lblRiseRate: "⚠️ Rising 25 cm/min!",
+    lblChildAt: "🎯 Child at:",
+    pauseTitle: "⏸️ PAUSE - Time to calculate!",
+    btnResume: "▶️ Resume",
+    lblPauseAngle: "Initial angle θ₀:",
+    lblPauseEta: "Factor η:",
+    lblPauseSpeed: "Current speed:",
+    lblPauseDist: "Horizontal distance:",
+    lblCalc: "🤔 Calculate:",
+    childHelp: "HELP!",
+    ouchBig: "OUCH!",
+    ouchSmall: "💥 You hit the building!",
+    restart: "🔄 Try again",
+    endPerfect: "🏆 PERFECT RESCUE!",
+    endGreat: "🎉 GREAT RESCUE!",
+    endOk: "✅ SUCCESSFUL RESCUE!",
+    endFail: "😢 FAILED",
+    medalGold: "GOLD MEDAL!",
+    medalSilver: "SILVER MEDAL!",
+    medalBronze: "BRONZE MEDAL!",
+    statsAttempts: "🎯 Attempts",
+    statsTime: "⏱️ Time",
+    statsWater: "🌊 Level",
+    physicsAnalysis: "📊 Physics summary",
+    a0: "Initial angle θ₀",
+    eta: "Factor η",
+    theoV: "Theoretical v_max",
+    relAngle: "Release angle",
+    scoreFinal: "📌 Final score",
+    failMsg1: "The water reached 4 m...",
+    failMsg2: "You didn’t make it in time.",
+    tipHdr: "💡 Tip",
+    tipBody:
+      "With η = {eta}, you need a fairly large initial angle to build speed.<br>" +
+      "Use: <span class='keys'>v = √(2ηgL(1−cosθ₀))</span><br>" +
+      "Press ⏸︎ to freeze the moment and compute.",
+    settingsHdr: "🧾 Starting choices",
+    settingsLoss: "Energy losses",
+    settingsWindow: "Target window",
+    settingsMode: "Rope release",
+    startBtn: "🚨 START MISSION",
+
+  },
+
+  it: {
+    docLang: "it",
+    title: "Missione di salvataggio - L.S. Renato Caccioppoli",
+    introTitle: "🌊 MISSIONE DI SALVATAGGIO",
+    langTitle: "🌍 Lingua",
+    modeTitle: "🎯 Modalità di gioco",
+modeManual: "Rilascio manuale",
+modeAuto: "Rilascio automatico (velocità orizzontale)",
+modeNote: "Manuale: decidi tu quando lasciare la corda. Automatico: la corda si rilascia da sola quando il moto diventa orizzontale (nel punto più basso).",
+    windowTitle: "🪟 Finestra bersaglio",
+    winNormal: "Normal (facile)",
+    winSmall: "Small (difficile)",
+        winThird: "1/3 (extreme)",
+windowNote: "Normal: apertura più grande. Small: più piccola (più difficile).",
+
+    schoolLine: "L.S. Renato Caccioppoli",
+    scenarioHdr: "🎮 Scenario",
+    scenarioBody:
+      "<strong style='color:#FF6B6B;'>EMERGENZA!</strong> Pioggia fortissima e strade allagate.<br>" +
+      "I tombini sono <strong>ostruiti</strong> e l’acqua sale rapidamente!<br>" +
+      "Un bambino è bloccato a <strong>4 m</strong> di altezza. Salvalo con il timing giusto!",
+    difficultyHdr: "⚡ Livello di fisica - Perdite di energia",
+    d1t: "Condizioni ideali (η = 1.00)",
+    d1s: "0% perdite - energia meccanica conservata",
+    d1b: "",
+    d2t: "Piccole perdite (η = 0.90)",
+    d2s: "10% perdite per attrito e aria",
+    d2b: "",
+    d3t: "Perdite realistiche (η = 0.80)",
+    d3s: "20% perdite - più realistico",
+    d3b: "",
+    scoringHdr: "📌 Punteggio (100 = massimo)",
+    scoringBody:
+      "Il punteggio premia i calcoli (non il “provo a caso”).<br>" +
+      "• <strong>70%</strong>: tentativi → ogni tentativo fallito toglie <strong>10</strong> punti.<br>" +
+      "• <strong>30%</strong>: precisione → oro: −0, argento: −8, bronzo: −16.<br>" +
+      "Il punteggio finale appare alla fine.",
+    medalsHdr: "🏅 Medaglie",
+    medalsBody:
+      "🥇 Oro: molto vicino al bambino<br>" +
+      "🥈 Argento: buon avvicinamento<br>" +
+      "🥉 Bronzo: successo dentro l’apertura<br>" +
+      "<span style='color:#aab;'>Sì, è un po’ “videogioco”. Volutamente 🙂</span>",
+    howtoHdr: "📖 Come si gioca",
+    howtoBody:
+      "1) <strong>Trascina</strong> il soccorritore per scegliere l’angolo iniziale θ₀.<br>" +
+      "2) (Opzionale) Calcola: <span class='keys'>v = √(2ηgL(1−cosθ₀))</span><br>" +
+      "3) Lascia oscillare. Premi <span class='keys'>SPACE</span> o <strong>🚀</strong> per mollare la corda.<br>" +
+      "4) <span class='keys'>P</span> o ⏸︎ pausa, <span class='keys'>R</span> o ↺ reset.",
+    audioNote: "🔊 Per attivare i suoni, premi “Start” una volta.",
+    /* HUD */
+    lblAttemptsTitle: "🎯 Tentativi",
+    lblScoreMini: "Punteggio:",
+    lblEnergyTitle: "⚡ Energia",
+    energyIdeal: "Condizioni ideali",
+    energyLoss10: "Perdite 10%",
+    energyLoss20: "Perdite 20%",
+    lblControlTitle: "⚙️ Controlli",
+    controlHelpDesktop:
+      "🖱️ <strong>Trascina e lascia</strong> per iniziare l’oscillazione<br>" +
+      "<span class='keys'>SPACE</span> rilascio | <span class='keys'>R</span> reset | <span class='keys'>P</span> pausa",
+    controlHelpTouch:
+      "👆 <strong>Trascina</strong> per impostare l’angolo iniziale<br>" +
+      "⏸︎ pausa | 🚀 rilascio | ↺ reset",
+    lblMeasurements: "📊 Misure:",
+    lblHorizDist: "Distanza orizzontale:",
+    lblRopeLen: "Lunghezza corda (L):",
+    lblChildHeight: "Altezza bambino:",
+    lblAngles: "📐 Angoli & velocità:",
+    lblRopeAngle: "Angolo corda θ:",
+    lblSpeed: "Velocità v:",
+    lblReleaseAngle: "Angolo di rilascio:",
+    lblPhysicsTitle: "📚 Fisica del pendolo",
+    etaHintPrefix: "η = fattore di conservazione dell’energia",
+    f3hint: "Velocità al punto più basso",
+    didacticHint: "🧠 Idea: scegli θ₀ → calcola v → rilascia al momento giusto.",
+    lblDangerTitle: "🚨 PERICOLO - ALLAGAMENTO!",
+    lblTime: "⏱️ Tempo:",
+    lblWater: "🌊 Livello:",
+    lblRiseRate: "⚠️ Sale di 25 cm/min!",
+    lblChildAt: "🎯 Bambino a:",
+    pauseTitle: "⏸️ PAUSA - Tempo di calcolare!",
+    btnResume: "▶️ Continua",
+    lblPauseAngle: "Angolo iniziale θ₀:",
+    lblPauseEta: "Fattore η:",
+    lblPauseSpeed: "Velocità attuale:",
+    lblPauseDist: "Distanza orizzontale:",
+    lblCalc: "🤔 Calcola:",
+    childHelp: "AIUTO!",
+    ouchBig: "Ahi!",
+    ouchSmall: "💥 Hai colpito l’edificio!",
+    restart: "🔄 Riprova",
+    endPerfect: "🏆 SALVATAGGIO PERFETTO!",
+    endGreat: "🎉 OTTIMO SALVATAGGIO!",
+    endOk: "✅ SALVATAGGIO RIUSCITO!",
+    endFail: "😢 FALLITO",
+    medalGold: "MEDAGLIA D’ORO!",
+    medalSilver: "MEDAGLIA D’ARGENTO!",
+    medalBronze: "MEDAGLIA DI BRONZO!",
+    statsAttempts: "🎯 Tentativi",
+    statsTime: "⏱️ Tempo",
+    statsWater: "🌊 Livello",
+    physicsAnalysis: "📊 Riepilogo fisico",
+    a0: "Angolo iniziale θ₀",
+    eta: "Fattore η",
+    theoV: "v_max teorica",
+    relAngle: "Angolo di rilascio",
+    scoreFinal: "📌 Punteggio finale",
+    failMsg1: "L’acqua ha raggiunto i 4 m...",
+    failMsg2: "Non hai fatto in tempo.",
+    tipHdr: "💡 Suggerimento",
+    tipBody:
+      "Con η = {eta}, serve un angolo iniziale abbastanza grande per aumentare la velocità.<br>" +
+      "Usa: <span class='keys'>v = √(2ηgL(1−cosθ₀))</span><br>" +
+      "Premi ⏸︎ per fermare e calcolare.",
+    settingsHdr: "🧾 Scelte iniziali",
+    settingsLoss: "Perdite di energia",
+    settingsWindow: "Finestra obiettivo",
+    settingsMode: "Rilascio della corda",
+    startBtn: "🚨 INIZIA MISSIONE",
+
+  }
+};
+
+let currentLang = "el";
+function qs(id){ return document.getElementById(id); }
+function isTouchDevice(){
+  return (navigator.maxTouchPoints && navigator.maxTouchPoints > 0) || ("ontouchstart" in window);
+}
+
+function setLanguage(lang){
+  currentLang = lang;
+  const t = I18N[lang];
+  document.documentElement.lang = t.docLang;
+  document.title = t.title;
+
+  qs("introTitle").textContent = t.introTitle;
+  qs("langTitle").textContent = t.langTitle;
+  
+  qs("modeTitle").textContent = t.modeTitle;
+  qs("modeManual").textContent = t.modeManual;
+  qs("modeAuto").textContent = t.modeAuto;
+  qs("modeNote").textContent = t.modeNote;
+  qs("windowTitle").textContent = t.windowTitle;
+  qs("winNormal").textContent = t.winNormal;
+  qs("winSmall").textContent = t.winSmall;
+    qs("winThird").textContent = t.winThird;
+qs("windowNote").textContent = t.windowNote;
+  qs("schoolLine").innerHTML = "<strong>"+t.schoolLine+"</strong>";
+  qs("scenarioHdr").textContent = t.scenarioHdr;
+  qs("scenarioBody").innerHTML = t.scenarioBody;
+
+  qs("difficultyHdr").textContent = t.difficultyHdr;
+  qs("d1t").textContent = t.d1t; qs("d1s").textContent = t.d1s; qs("d1b").textContent = t.d1b;
+  qs("d2t").textContent = t.d2t; qs("d2s").textContent = t.d2s; qs("d2b").textContent = t.d2b;
+  qs("d3t").textContent = t.d3t; qs("d3s").textContent = t.d3s; qs("d3b").textContent = t.d3b;
+
+  qs("scoringHdr").textContent = t.scoringHdr;
+  qs("scoringBody").innerHTML = t.scoringBody;
+  qs("medalsHdr").textContent = t.medalsHdr;
+  qs("medalsBody").innerHTML = t.medalsBody;
+  qs("howtoHdr").textContent = t.howtoHdr;
+  qs("howtoBody").innerHTML = t.howtoBody;
+  qs("audioNote").textContent = t.audioNote;
+  qs("startBtn").textContent = t.startBtn;
+
+  // HUD labels
+  qs("lblAttemptsTitle").textContent = t.lblAttemptsTitle;
+  qs("lblScoreMini").textContent = t.lblScoreMini;
+  qs("lblEnergyTitle").textContent = t.lblEnergyTitle;
+  qs("lblControlTitle").textContent = t.lblControlTitle;
+
+  qs("lblMeasurements").textContent = t.lblMeasurements;
+  qs("lblHorizDist").textContent = t.lblHorizDist;
+  qs("lblRopeLen").textContent = t.lblRopeLen;
+  qs("lblChildHeight").textContent = t.lblChildHeight;
+
+  qs("lblAngles").textContent = t.lblAngles;
+  qs("lblRopeAngle").textContent = t.lblRopeAngle;
+  qs("lblSpeed").textContent = t.lblSpeed;
+  qs("lblReleaseAngle").textContent = t.lblReleaseAngle;
+
+  qs("lblPhysicsTitle").textContent = t.lblPhysicsTitle;
+  qs("etaHint").innerHTML = t.etaHintPrefix + " (<span id='etaDisplay'>"+document.getElementById("etaDisplay").textContent+"</span>)";
+  qs("f3hint").textContent = t.f3hint;
+  qs("didacticHint").textContent = t.didacticHint;
+
+  qs("lblDangerTitle").textContent = t.lblDangerTitle;
+  qs("lblTime").textContent = t.lblTime;
+  qs("lblWater").textContent = t.lblWater;
+  qs("lblRiseRate").textContent = t.lblRiseRate;
+  qs("lblChildAt").textContent = t.lblChildAt;
+
+  // Pause panel
+  qs("pauseTitle").textContent = t.pauseTitle;
+  qs("btnResume").textContent = t.btnResume;
+  qs("lblPauseAngle").textContent = t.lblPauseAngle;
+  qs("lblPauseEta").textContent = t.lblPauseEta;
+  qs("lblPauseSpeed").textContent = t.lblPauseSpeed;
+  qs("lblPauseDist").textContent = t.lblPauseDist;
+  qs("lblCalc").textContent = t.lblCalc;
+
+  // End screen button
+  qs("btnRestart").textContent = t.restart;
+
+  // Control help text
+  qs("controlHelp").innerHTML = isTouchDevice() ? t.controlHelpTouch : t.controlHelpDesktop;
+
+  // Language button selected
+  document.querySelectorAll(".lang-btn").forEach(b=>b.classList.remove("selected"));
+  if(lang==="el") qs("langEl").classList.add("selected");
+  if(lang==="en") qs("langEn").classList.add("selected");
+  if(lang==="it") qs("langIt").classList.add("selected");
+}
+
+/* =========================
+   GAME LOGIC
+   ========================= */
+let selectedEta = 1.0;
+
+
+
+let selectedMode = 'manual'; // 'manual' | 'auto'
+let selectedWindow = 'normal'; // 'normal' | 'small' | 'third'
+
+
+function setMode(mode){
+  selectedMode = mode;
+
+  // Update selected highlight ONLY for mode buttons
+  ["modeManual","modeAuto"].forEach(id => { const el = qs(id); if(el) el.classList.remove("selected"); });
+
+  if(mode === "manual") qs("modeManual").classList.add("selected");
+  if(mode === "auto")   qs("modeAuto").classList.add("selected");
+}
+function setWindow(mode){
+  selectedWindow = mode;
+
+  // Update selected highlight ONLY for window buttons
+  const btnIds = ["winNormal","winSmall","winThird"];
+  btnIds.forEach(id => { const el = qs(id); if(el) el.classList.remove("selected"); });
+
+  if(mode === "normal") qs("winNormal").classList.add("selected");
+  if(mode === "small")  qs("winSmall").classList.add("selected");
+  if(mode === "third")  qs("winThird").classList.add("selected");
+
+  // Preview the chosen window even on the intro screen
+  try{
+    if(typeof state !== "undefined" && state.phase === "menu"){
+      RESCUE_ZONE = RESCUE_ZONES[selectedWindow] || RESCUE_ZONES.normal;
+    }
+  }catch(_e){}
+}
+function selectDifficulty(labelEl, eta){
+  document.querySelectorAll('.difficulty-option').forEach(el => el.classList.remove('selected'));
+  labelEl.classList.add('selected');
+  labelEl.querySelector('input').checked = true;
+  selectedEta = eta;
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  // Responsive container sizing (keeps 1200x700 internal coords)
+  const container = qs("game-container");
+  const baseW = 1200, baseH = 700;
+  function resize(){
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    const scale = Math.min(w / baseW, h / baseH);
+    container.style.width = Math.round(baseW * scale) + "px";
+    container.style.height = Math.round(baseH * scale) + "px";
+  }
+  window.addEventListener("resize", resize, {passive:true});
+  resize();
+
+  const canvas = qs('canvas');
+  const ctx = canvas.getContext('2d');
+
+  /* ---------- Audio ---------- */
+  let audioCtx = null;
+  function initAudio(){
+    if(!audioCtx){
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if(audioCtx.state === "suspended"){
+      audioCtx.resume().catch(()=>{});
+    }
+  }
+
+  function playSound(type){
+    initAudio();
+    if(!audioCtx) return;
+    const now = audioCtx.currentTime;
+
+    if(type === 'cry'){
+      for (let i = 0; i < 7; i++){
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination);
+
+        const startTime = now + i * 0.23;
+        const dur = 0.20;
+        const base = 680 + Math.random()*180;
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(base, startTime);
+        osc.frequency.linearRampToValueAtTime(base-260, startTime + dur*0.55);
+        osc.frequency.linearRampToValueAtTime(base-140, startTime + dur);
+
+        gain.gain.setValueAtTime(0.0, startTime);
+        gain.gain.linearRampToValueAtTime(0.14, startTime+0.03);
+        gain.gain.linearRampToValueAtTime(0.06, startTime+dur*0.75);
+        gain.gain.linearRampToValueAtTime(0.0, startTime+dur);
+
+        osc.start(startTime);
+        osc.stop(startTime+dur+0.02);
+      }
+    } else if(type === 'ouch'){
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(320, now);
+      osc.frequency.linearRampToValueAtTime(90, now + 0.25);
+      gain.gain.setValueAtTime(0.28, now);
+      gain.gain.linearRampToValueAtTime(0.0, now + 0.35);
+      osc.start(now);
+      osc.stop(now + 0.35);
+
+    } else if(type === 'splash'){
+      const src = audioCtx.createBufferSource();
+      const buffer = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.45, audioCtx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < buffer.length; i++){
+        data[i] = (Math.random()*2 - 1) * Math.exp(-i/(buffer.length*0.08));
+      }
+      src.buffer = buffer;
+
+      const bp = audioCtx.createBiquadFilter();
+      bp.type = 'bandpass';
+      bp.frequency.value = 700;
+
+      const gain = audioCtx.createGain();
+      src.connect(bp); bp.connect(gain); gain.connect(audioCtx.destination);
+      gain.gain.setValueAtTime(0.22, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now+0.45);
+      src.start(now);
+
+    } else if(type === 'thunder'){
+      const src = audioCtx.createBufferSource();
+      const buffer = audioCtx.createBuffer(1, audioCtx.sampleRate * 1.6, audioCtx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for(let i=0;i<buffer.length;i++){
+        data[i] = (Math.random()*2 - 1) * Math.exp(-i/(buffer.length*0.18));
+      }
+      src.buffer = buffer;
+
+      const lp = audioCtx.createBiquadFilter();
+      lp.type = 'lowpass';
+      lp.frequency.value = 220;
+
+      const gain = audioCtx.createGain();
+      src.connect(lp); lp.connect(gain); gain.connect(audioCtx.destination);
+
+      gain.gain.setValueAtTime(0.0, now);
+      gain.gain.linearRampToValueAtTime(0.22, now+0.08);
+      gain.gain.linearRampToValueAtTime(0.0, now+1.5);
+
+      src.start(now);
+
+      const osc = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(55, now);
+      osc.frequency.linearRampToValueAtTime(42, now+1.2);
+      g.gain.setValueAtTime(0.0, now);
+      g.gain.linearRampToValueAtTime(0.08, now+0.12);
+      g.gain.linearRampToValueAtTime(0.0, now+1.4);
+      osc.connect(g); g.connect(audioCtx.destination);
+      osc.start(now);
+      osc.stop(now+1.5);
+
+    } else if(type === 'alarm'){
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(780, now);
+      osc.frequency.linearRampToValueAtTime(420, now+0.15);
+      osc.frequency.linearRampToValueAtTime(780, now+0.30);
+      gain.gain.setValueAtTime(0.13, now);
+      gain.gain.linearRampToValueAtTime(0.0, now+0.35);
+      osc.start(now);
+      osc.stop(now+0.35);
+
+    } else if(type === 'win_gold' || type==='win_silver' || type==='win_bronze'){
+      const seq = (type==='win_gold') ? [523,659,784,1047,1319] :
+                 (type==='win_silver') ? [440,554,659,880] :
+                 [330,392,494];
+      seq.forEach((f,i)=>{
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.type = 'sine';
+        osc.frequency.value = f;
+        const t0 = now + i*(type==='win_gold'?0.12:0.15);
+        gain.gain.setValueAtTime(0.18, t0);
+        gain.gain.linearRampToValueAtTime(0.0, t0 + 0.38);
+        osc.start(t0);
+        osc.stop(t0 + 0.38);
+      });
+    }
+  }
+
+  /* ---------- Physics constants ---------- */
+  const PPM = 40;
+  const GRAVITY = 9.81;
+  const ROPE_LEN = 8;              // meters
+  const PIVOT = { x: 300, y: 60 }; // pixels in internal coords
+  const GROUND_Y = 650;            // pixels
+
+  const WATER_RISE_RATE = 0.25/60; // m/s (25cm/min)
+
+  const CHILD_Y = GROUND_Y - 4 * PPM; // child at 4m above ground
+  const TARGET_X = 700;
+
+  const RESCUE_ZONES = {
+    normal: { top: 400, bottom: 580, left: 600, right: 780 },
+    // Half-size window (more difficult)
+    small:  { top: 445, bottom: 535, left: 645, right: 735 },
+    // One-third size window (extreme)
+    third:  { top: 460, bottom: 520, left: 660, right: 720 }
+  };
+  let RESCUE_ZONE = RESCUE_ZONES.normal;
+
+  const BUILDING_X = 600;
+  const BUILDING_WIDTH = 200;
+  const BUILDING_TOP = 100;
+  const BUILDING_BOTTOM = 650;
+
+  const START_BUILDING = { x: 30, y: GROUND_Y - 620, width: 220, height: 620 };
+
+  const MEDAL_ZONES = { gold: 40, silver: 70, bronze: 110 };
+
+  /* ---------- Weather particles ---------- */
+  let raindrops = [];
+  for (let i=0;i<150;i++){
+    raindrops.push({
+      x: Math.random()*1200,
+      y: Math.random()*700,
+      speed: 400 + Math.random()*200,
+      length: 15 + Math.random()*10
+    });
+  }
+
+  /* ---------- State ---------- */
+  let state = {
+    phase:'menu',
+    t:0,
+    waterLvl:2,
+    angle:0,
+    angVel:0,
+    initialAngle:0,
+    releaseAngle:null,
+    heroPos:{x:0,y:0},
+    velocity:{x:0,y:0},  // m/s
+    trail:[],
+    win:false,
+    attempts:0,
+    paused:false,
+    lastCryTime:-10,
+    showOuch:false,
+    ouchTimer:0,
+    eta:1.0,
+    lastAlarmTime:0,
+    nextLightning: 3.0, // seconds
+    lightningFlash: 0.0,
+    lightningT: 0.0,
+    mode:'manual',
+    autoReleased:false
+  };
+
+  /* ---------- Utility (pointer mapping) ---------- */
+  function getPointerPos(e){
+    const rect = canvas.getBoundingClientRect();
+    const clientX = e.clientX ?? (e.touches && e.touches[0] && e.touches[0].clientX);
+    const clientY = e.clientY ?? (e.touches && e.touches[0] && e.touches[0].clientY);
+    const x = (clientX - rect.left) * (canvas.width / rect.width);
+    const y = (clientY - rect.top) * (canvas.height / rect.height);
+    return {x,y};
+  }
+
+  /* ---------- UI helpers ---------- */
+  function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
+
+  function computeScore(successMedal){
+    const attemptComponent = clamp(100 - 10*state.attempts, 0, 100);
+    let medalPenalty = 16;
+    if(successMedal === 'gold') medalPenalty = 0;
+    else if(successMedal === 'silver') medalPenalty = 8;
+    else if(successMedal === 'bronze') medalPenalty = 16;
+    const accuracyComponent = clamp(100 - medalPenalty, 0, 100);
+    const score = 0.7*attemptComponent + 0.3*accuracyComponent;
+    return Math.round(clamp(score, 0, 100));
+  }
+
+  function updateMiniScore(){
+    const attemptComponent = clamp(100 - 10*state.attempts, 0, 100);
+    const score = Math.round(0.7*attemptComponent + 0.3*100);
+    qs("scoreMini").textContent = score;
+  }
+
+  function updateEnergyDisplay(){
+    const indicator = qs('energyIndicator');
+    const desc = qs('energyDesc');
+    const etaDisp = qs('etaDisplay');
+    const t = I18N[currentLang];
+
+    indicator.textContent = (state.eta*100).toFixed(0) + '%';
+    etaDisp.textContent = state.eta.toFixed(2);
+
+    if(state.eta === 1.0){
+      indicator.className = 'energy-indicator energy-100';
+      desc.textContent = t.energyIdeal;
+    }else if(state.eta === 0.9){
+      indicator.className = 'energy-indicator energy-90';
+      desc.textContent = t.energyLoss10;
+    }else{
+      indicator.className = 'energy-indicator energy-80';
+      desc.textContent = t.energyLoss20;
+    }
+  }
+
+  function updatePausePanel(){
+    const angleDeg = (state.initialAngle * 180 / Math.PI).toFixed(1);
+    qs('pauseAngle').textContent = angleDeg + '°';
+    qs('pauseEta').textContent = state.eta.toFixed(2);
+    qs('pauseSpeed').textContent = (ROPE_LEN * Math.abs(state.angVel)).toFixed(2) + ' m/s';
+    qs('pauseDist').textContent = ((TARGET_X - PIVOT.x)/PPM).toFixed(2) + ' m';
+    qs('calcEta').textContent = state.eta.toFixed(2);
+    qs('calcAngle').textContent = angleDeg;
+  }
+
+  window.togglePause = function(){
+    if(state.phase === 'menu' || state.phase === 'end') return;
+    state.paused = !state.paused;
+    const panel = qs('pausePanel');
+    if(state.paused){
+      panel.classList.remove('hidden');
+      updatePausePanel();
+    }else{
+      panel.classList.add('hidden');
+      lastTime = performance.now();
+      requestAnimationFrame(loop);
+    }
+  };
+
+
+  function syncMenuSelections(){
+    // Keep the menu buttons in sync with the current selections
+    setLanguage(currentLang);
+    setMode(selectedMode);
+    setWindow(selectedWindow);
+
+    if(selectedEta === 1.0) selectDifficulty(qs("diff1"), 1.0);
+    else if(selectedEta === 0.9) selectDifficulty(qs("diff2"), 0.9);
+    else selectDifficulty(qs("diff3"), 0.8);
+  }
+
+  function returnToMenu(){
+    // Show the intro screen again (same language as before)
+    qs('endScreen').classList.add('hidden');
+    qs('pausePanel').classList.add('hidden');
+
+    state.phase = 'menu';
+    state.paused = false;
+    state.trail = [];
+    state.showOuch = false;
+    state.ouchTimer = 0;
+
+    qs('introScreen').classList.remove('hidden');
+    syncMenuSelections();
+  }
+
+  /* ---------- Start / Restart ---------- */
+  function startGame(){
+    // Apply selected game mode
+    state.mode = selectedMode;
+    // Apply target window size
+    RESCUE_ZONE = RESCUE_ZONES[selectedWindow] || RESCUE_ZONES.normal;
+    // Snapshot the run configuration (so we can show it on the end screen)
+    state.runConfig = {
+      lang: currentLang,
+      mode: selectedMode,
+      window: selectedWindow,
+      eta: selectedEta
+    };
+    state.autoReleased = false;
+    // In auto mode, students don't need the release button
+    qs("btnRelease").classList.toggle("hidden", selectedMode === "auto");
+
+    state.eta = selectedEta;
+    updateEnergyDisplay();
+
+    qs('introScreen').classList.add('hidden');
+    state.phase = 'idle';
+    state.heroPos = { x: PIVOT.x, y: PIVOT.y + ROPE_LEN * PPM };
+    state.t = 0;
+    state.waterLvl = 2;
+    state.attempts = 0;
+    state.releaseAngle = null;
+    state.lastCryTime = -10;
+    state.lastAlarmTime = 0;
+    state.paused = false;
+    state.trail = [];
+    state.nextLightning = 2.5 + Math.random()*4.5;
+    state.lightningFlash = 0;
+    state.lightningT = 0;
+    state.win = false;
+
+    const distance = ((TARGET_X - PIVOT.x)/PPM).toFixed(1);
+    qs('distDisplay').textContent = distance + ' m';
+    qs('ropeDisplay').textContent = ROPE_LEN.toFixed(1) + ' m';
+    qs('childHeightDisplay').textContent = '4.0 m';
+    qs('childAtDisp').textContent = '4.0 m';
+
+    qs('attemptDisp').textContent = '0';
+    qs('releaseAngleDisplay').textContent = '-';
+    qs('angleDisplay').textContent = '0°';
+    qs('speedDisplay').textContent = '0.0 m/s';
+
+    updateMiniScore();
+
+    lastTime = performance.now();
+    requestAnimationFrame(loop);
+  }
+
+  function restart(){
+    returnToMenu();
+  }
+
+  qs('btnRestart').addEventListener('click', restart);
+
+  /* ---------- Reliable tap/click bindings (mobile + desktop) ---------- */
+  let __tapLock = 0;
+  function bindTap(id, handler){
+    const el = qs(id);
+    if(!el) return;
+    const wrapped = (e)=>{
+      const now = performance.now();
+      if(now - __tapLock < 350) return; // avoid double fire (touchend + click)
+      __tapLock = now;
+      if(e && e.type === "touchend") e.preventDefault();
+      handler(e);
+    };
+    el.addEventListener("click", wrapped);
+    el.addEventListener("pointerup", wrapped);
+    el.addEventListener("touchend", wrapped, {passive:false});
+  }
+
+  /* ---------- Armored intro screen: event delegation (mobile + desktop) ---------- */
+  let __introLastPointerAt = 0;
+  let __introLastHandledAt = 0;
+  function initIntroDelegation(){
+    const intro = qs("introScreen");
+    if(!intro) return;
+
+    const handle = (e)=>{
+      const btn = e.target && e.target.closest ? e.target.closest("button[data-action]") : null;
+      if(!btn || !intro.contains(btn)) return;
+
+      if(e && e.cancelable) e.preventDefault();
+      e && e.stopPropagation && e.stopPropagation();
+
+      const now = performance.now();
+
+      // Suppress synthetic click after pointer/touch
+      if(e.type === "click" && (now - __introLastPointerAt) < 450) return;
+      // Prevent accidental double-fire
+      if((now - __introLastHandledAt) < 120) return;
+
+      __introLastHandledAt = now;
+
+      const action = btn.dataset.action;
+      const value  = btn.dataset.value;
+
+      if(action === "lang"){
+        setLanguage(value);
+        return;
+      }
+      if(action === "mode"){
+        setMode(value);
+        return;
+      }
+      if(action === "window"){
+        setWindow(value);
+        return;
+      }
+      if(action === "start"){
+        initAudio();
+        startGame();
+        return;
+      }
+    };
+
+    const onPointerUp = (e)=>{ __introLastPointerAt = performance.now(); handle(e); };
+
+    // Capture phase: wins against overlay quirks
+    intro.addEventListener("pointerup", onPointerUp, {capture:true});
+    intro.addEventListener("touchend", handle, {capture:true, passive:false});
+    intro.addEventListener("click", handle, {capture:true});
+  }
+
+  /* ---------- Language buttons ---------- */
+  bindTap("btnRestart", restart);
+  
+  // Read language from URL parameter if present
+  const urlParams = new URLSearchParams(window.location.search);
+  const langParam = urlParams.get('lang');
+  if (langParam && ['el', 'en', 'it'].includes(langParam)) {
+    setLanguage(langParam);
+    // Also update the language button visual selection
+    document.querySelectorAll('.lang-btn').forEach(btn => btn.classList.remove('selected'));
+    const activeBtn = document.querySelector(`.lang-btn[data-value="${langParam}"]`);
+    if (activeBtn) activeBtn.classList.add('selected');
+  } else {
+    setLanguage("el");
+  }
+
+  /* ---------- Difficulty buttons ---------- */
+  bindTap("diff1", ()=>selectDifficulty(qs("diff1"), 1.0));
+  bindTap("diff2", ()=>selectDifficulty(qs("diff2"), 0.9));
+  bindTap("diff3", ()=>selectDifficulty(qs("diff3"), 0.8));
+
+  /* ---------- Game mode buttons ---------- */
+  setMode("manual");
+
+  /* ---------- Target window size ---------- */
+  setWindow("normal");
+  initIntroDelegation();
+
+
+
+  /* ---------- HUD toggle on mobile ---------- */
+  let hudCollapsed = (window.innerWidth < 760);
+  function applyHudCollapsed(){
+    const show = !hudCollapsed;
+    qs("hudControl").style.display = show ? "" : "none";
+    qs("hudPhysics").style.display = show ? "" : "none";
+  }
+  applyHudCollapsed();
+  qs("hudToggle").addEventListener("click", ()=>{
+    hudCollapsed = !hudCollapsed;
+    applyHudCollapsed();
+  });
+
+  /* ---------- Mobile controls ---------- */
+  qs("btnPause").addEventListener("click", ()=>togglePause());
+  qs("btnReset").addEventListener("click", ()=>resetHard());
+  qs("btnRelease").addEventListener("click", ()=>{ if(state.mode !== "auto") tryRelease(); });
+  qs("btnResume").addEventListener("click", ()=>togglePause());
+
+  function resetHard(){
+    if(state.phase === 'menu' || state.phase === 'end') return;
+    if(state.paused) togglePause();
+    state.phase = 'idle';
+    state.heroPos = { x: PIVOT.x, y: PIVOT.y + ROPE_LEN * PPM };
+    state.angle = 0;
+    state.angVel = 0;
+      state.autoReleased = false;
+    
+    state.autoReleased = false;
+state.trail = [];
+    state.releaseAngle = null;
+    qs('releaseAngleDisplay').textContent = '-';
+    qs('angleDisplay').textContent = '0°';
+    qs('speedDisplay').textContent = '0.0 m/s';
+  }
+
+  /* ---------- Collision ---------- */
+  function checkCollision(){
+    const hx = state.heroPos.x;
+    const hy = state.heroPos.y;
+
+    if(hy >= RESCUE_ZONE.top && hy <= RESCUE_ZONE.bottom){
+      if(hx >= RESCUE_ZONE.left && hx <= RESCUE_ZONE.right){
+        const dx = hx - TARGET_X;
+        const dy = hy - CHILD_Y;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        if(dist <= MEDAL_ZONES.gold) return 'gold';
+        if(dist <= MEDAL_ZONES.silver) return 'silver';
+        return 'bronze';
+      }
+    }
+
+    if(hx >= BUILDING_X && hx <= BUILDING_X + BUILDING_WIDTH){
+      if(hy >= BUILDING_TOP && hy < RESCUE_ZONE.top) return 'crash';
+      if(hy > RESCUE_ZONE.bottom && hy <= BUILDING_BOTTOM) return 'crash';
+    }
+    if(hx > RESCUE_ZONE.right && hx <= BUILDING_X + BUILDING_WIDTH){
+      if(hy >= BUILDING_TOP && hy <= BUILDING_BOTTOM) return 'crash';
+    }
+    return false;
+  }
+
+  /* ---------- Lightning ---------- */
+  function triggerLightning(){
+    state.lightningFlash = 1.0;
+    state.lightningT = 0.15;
+    const delay = 120 + Math.random()*260;
+    setTimeout(()=>playSound("thunder"), delay);
+    state.nextLightning = 3.5 + Math.random()*7.5;
+  }
+
+  /* ---------- Update ---------- */
+  function update(dt){
+    if(state.phase === 'end' || state.phase === 'menu' || state.paused) return;
+
+    state.nextLightning -= dt;
+    if(state.nextLightning <= 0) triggerLightning();
+    if(state.lightningT > 0){
+      state.lightningT -= dt;
+      state.lightningFlash = Math.max(0, state.lightningT / 0.15);
+    }else{
+      state.lightningFlash = 0;
+    }
+
+    state.waterLvl += WATER_RISE_RATE * dt;
+
+    const mins = Math.floor(state.t/60);
+    const secs = Math.floor(state.t%60).toString().padStart(2,'0');
+    qs('timeDisp').textContent = `${mins}:${secs}`;
+    qs('waterDisp').textContent = state.waterLvl.toFixed(2) + ' m';
+    qs('waterBar').style.width = Math.min((state.waterLvl/4)*100, 100) + '%';
+
+    const dangerPanel = qs('dangerPanel');
+    if(state.waterLvl > 3.2){
+      dangerPanel.classList.add('urgent');
+      if(state.t - state.lastAlarmTime > 2){
+        playSound('alarm');
+        state.lastAlarmTime = state.t;
+      }
+    }else{
+      dangerPanel.classList.remove('urgent');
+    }
+
+    if(state.t - state.lastCryTime > 15){
+      playSound('cry');
+      state.lastCryTime = state.t;
+    }
+
+    if(state.waterLvl >= 4 && !state.win){
+      gameOver(false, 'water');
+    }
+
+    state.t += dt;
+
+    if(state.showOuch){
+      state.ouchTimer -= dt;
+      if(state.ouchTimer <= 0) state.showOuch = false;
+    }
+
+    if(state.phase === 'swing'){
+      const prevAngle = state.angle;
+      const alpha = -(GRAVITY/ROPE_LEN) * Math.sin(state.angle);
+      state.angVel += alpha * dt;
+      const dampingFactor = 1 - (1 - state.eta) * 0.02;
+      state.angVel *= dampingFactor;
+      state.angle += state.angVel * dt;
+
+      state.heroPos.x = PIVOT.x + (ROPE_LEN*PPM) * Math.sin(state.angle);
+      state.heroPos.y = PIVOT.y + (ROPE_LEN*PPM) * Math.cos(state.angle);
+
+      const angleDeg = (state.angle * 180/Math.PI).toFixed(1);
+      const currentV = ROPE_LEN * Math.abs(state.angVel);
+
+      qs('angleDisplay').textContent = angleDeg + '°';
+      qs('speedDisplay').textContent = currentV.toFixed(2) + ' m/s';
+
+      // Auto-release exactly when the motion becomes horizontal (lowest point)
+      if(state.mode === 'auto' && !state.autoReleased){
+        if(prevAngle < 0 && state.angle >= 0 && state.angVel > 0){
+          autoReleaseHorizontal();
+        }
+      }
+
+    }else if(state.phase === 'swing_back'){
+      const alpha = -(GRAVITY/ROPE_LEN) * Math.sin(state.angle);
+      state.angVel += alpha * dt;
+      state.angVel *= 0.92;
+      state.angle += state.angVel * dt;
+
+      if(Math.abs(state.angle) < 0.02 && Math.abs(state.angVel) < 0.1){
+        state.angle = 0; state.angVel = 0;
+      state.autoReleased = false; state.phase = 'idle';
+      }
+
+    }else if(state.phase === 'jump'){
+      state.velocity.y += GRAVITY * dt;
+      state.heroPos.x += state.velocity.x * dt * PPM;
+      state.heroPos.y += state.velocity.y * dt * PPM;
+
+      state.trail.push({x: state.heroPos.x, y: state.heroPos.y, time: state.t});
+      while(state.trail.length && state.t - state.trail[0].time > 3) state.trail.shift();
+
+      const collision = checkCollision();
+      if(collision === 'gold' || collision === 'silver' || collision === 'bronze'){
+        playSound(collision==='gold' ? 'win_gold' : collision==='silver' ? 'win_silver' : 'win_bronze');
+        gameOver(true, collision);
+        return;
+      }else if(collision === 'crash'){
+        playSound('ouch');
+        state.showOuch = true;
+        state.ouchTimer = 1.5;
+        resetAttempt('crash');
+        return;
+      }
+
+      const waterY = GROUND_Y - state.waterLvl * PPM;
+      if(state.heroPos.y > waterY){
+        playSound('splash');
+        resetAttempt('water');
+      }else if(state.heroPos.x > 1200 || state.heroPos.x < 0 || state.heroPos.y > GROUND_Y){
+        resetAttempt('miss');
+      }
+    }
+  }
+
+  function resetAttempt(reason){
+    state.attempts++;
+    qs('attemptDisp').textContent = state.attempts;
+    updateMiniScore();
+
+    state.phase = 'swing_back';
+    state.heroPos = { x: PIVOT.x, y: PIVOT.y + ROPE_LEN * PPM };
+    state.angVel = 0;
+    state.releaseAngle = null;
+    state.trail = [];
+    qs('releaseAngleDisplay').textContent = '-';
+
+    const el = qs('attemptDisp');
+    el.style.color = '#FF6B6B';
+    setTimeout(()=>{ el.style.color = '#FFA500'; }, 260);
+  }
+
+  function tryRelease(){
+    if(state.paused) return;
+    if(state.phase !== 'swing') return;
+
+    state.phase = 'jump';
+
+    const tangentAngle = state.angle;
+    const horizontalAngle = Math.PI/2 - Math.abs(tangentAngle);
+
+    state.releaseAngle = (state.angVel > 0) ? horizontalAngle : -horizontalAngle;
+    qs('releaseAngleDisplay').textContent = (state.releaseAngle * 180/Math.PI).toFixed(1) + '°';
+
+    const vLinear = ROPE_LEN * state.angVel; // m/s
+    state.velocity.x = vLinear * Math.cos(state.angle);
+    state.velocity.y = -vLinear * Math.sin(state.angle);
+
+    state.trail = [];
+  }
+
+  function autoReleaseHorizontal(){
+    if(state.paused) return;
+    if(state.phase !== 'swing') return;
+
+    state.phase = 'jump';
+    state.autoReleased = true;
+
+    // Force release at the lowest point so projectile is horizontal
+    state.angle = 0;
+    state.heroPos = { x: PIVOT.x, y: PIVOT.y + ROPE_LEN * PPM };
+
+    state.releaseAngle = 0;
+    qs('releaseAngleDisplay').textContent = '0.0°';
+    qs('angleDisplay').textContent = '0.0°';
+
+    const vLinear = ROPE_LEN * state.angVel; // m/s (should be positive when moving right)
+    state.velocity.x = vLinear;
+    state.velocity.y = 0;
+
+    state.trail = [];
+  }
+
+
+  /* ---------- Drawing ---------- */
+
+  function drawBuildings(){
+    ctx.fillStyle = '#2C3E50';
+    ctx.fillRect(START_BUILDING.x, START_BUILDING.y, START_BUILDING.width, START_BUILDING.height);
+
+    ctx.fillStyle = '#FFE082';
+    for(let i=0;i<8;i++){
+      for(let j=0;j<3;j++){
+        ctx.fillRect(START_BUILDING.x + 25 + j*65, START_BUILDING.y + 90 + i*65, 45, 40);
+      }
+    }
+
+    ctx.fillStyle = 'rgba(255,255,255,0.95)';
+    ctx.fillRect(START_BUILDING.x + 10, START_BUILDING.y + 15, START_BUILDING.width - 20, 60);
+
+    ctx.fillStyle = '#1565C0';
+    ctx.textAlign = 'center';
+
+    if(currentLang === 'el'){
+      ctx.font = 'bold 18px Arial';
+      ctx.fillText('2ο ΛΥΚΕΙΟ', START_BUILDING.x + START_BUILDING.width/2, START_BUILDING.y + 40);
+      ctx.fillText('ΜΟΣΧΑΤΟΥ', START_BUILDING.x + START_BUILDING.width/2, START_BUILDING.y + 62);
+    }else if(currentLang === 'en'){
+      ctx.font = 'bold 16px Arial';
+      ctx.fillText('2nd HIGH SCHOOL', START_BUILDING.x + START_BUILDING.width/2, START_BUILDING.y + 40);
+      ctx.fillText('OF MOSCHATO', START_BUILDING.x + START_BUILDING.width/2, START_BUILDING.y + 62);
+    }else{
+      ctx.font = 'bold 16px Arial';
+      ctx.fillText('L.S. Renato', START_BUILDING.x + START_BUILDING.width/2, START_BUILDING.y + 40);
+      ctx.fillText('Caccioppoli', START_BUILDING.x + START_BUILDING.width/2, START_BUILDING.y + 62);
+    }
+
+    ctx.fillStyle = '#1c2833';
+    ctx.fillRect(BUILDING_X, BUILDING_TOP, BUILDING_WIDTH, RESCUE_ZONE.top - BUILDING_TOP);
+    ctx.fillRect(BUILDING_X, RESCUE_ZONE.bottom, BUILDING_WIDTH, BUILDING_BOTTOM - RESCUE_ZONE.bottom);
+    ctx.fillRect(RESCUE_ZONE.right, RESCUE_ZONE.top, BUILDING_X + BUILDING_WIDTH - RESCUE_ZONE.right, RESCUE_ZONE.bottom - RESCUE_ZONE.top);
+
+    ctx.fillStyle = '#D4A574';
+    for(let i=0;i<4;i++){
+      for(let j=0;j<2;j++){
+        ctx.fillRect(BUILDING_X + 30 + j*80, BUILDING_TOP + 30 + i*70, 45, 40);
+      }
+    }
+    ctx.fillRect(BUILDING_X + 30, RESCUE_ZONE.bottom + 20, 45, 40);
+    ctx.fillRect(BUILDING_X + 110, RESCUE_ZONE.bottom + 20, 45, 40);
+  }
+
+  function drawRescueOpening(){
+    const grad = ctx.createLinearGradient(RESCUE_ZONE.left, 0, RESCUE_ZONE.right, 0);
+    grad.addColorStop(0, 'rgba(255,250,200,0.9)');
+    grad.addColorStop(0.5, 'rgba(255,230,150,0.7)');
+    grad.addColorStop(1, 'rgba(200,180,100,0.5)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(RESCUE_ZONE.left, RESCUE_ZONE.top, RESCUE_ZONE.right-RESCUE_ZONE.left, RESCUE_ZONE.bottom-RESCUE_ZONE.top);
+
+    ctx.strokeStyle = '#f1c40f';
+    ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.moveTo(RESCUE_ZONE.left, RESCUE_ZONE.top); ctx.lineTo(RESCUE_ZONE.right, RESCUE_ZONE.top); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(RESCUE_ZONE.left, RESCUE_ZONE.bottom); ctx.lineTo(RESCUE_ZONE.right, RESCUE_ZONE.bottom); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(RESCUE_ZONE.right, RESCUE_ZONE.top); ctx.lineTo(RESCUE_ZONE.right, RESCUE_ZONE.bottom); ctx.stroke();
+
+    ctx.fillStyle = 'rgba(0,255,120,0.55)';
+    ctx.beginPath();
+    ctx.moveTo(RESCUE_ZONE.left - 30, (RESCUE_ZONE.top + RESCUE_ZONE.bottom)/2);
+    ctx.lineTo(RESCUE_ZONE.left - 10, (RESCUE_ZONE.top + RESCUE_ZONE.bottom)/2 - 15);
+    ctx.lineTo(RESCUE_ZONE.left - 10, (RESCUE_ZONE.top + RESCUE_ZONE.bottom)/2 + 15);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  function drawChild(){
+    if(state.win) return;
+
+    ctx.fillStyle = '#FFDBAC';
+    ctx.beginPath(); ctx.arc(TARGET_X, CHILD_Y, 16, 0, Math.PI*2); ctx.fill();
+
+    ctx.fillStyle = '#8B4513';
+    ctx.beginPath(); ctx.arc(TARGET_X, CHILD_Y - 6, 16, Math.PI, 2*Math.PI); ctx.fill();
+
+    ctx.fillStyle = '#3498DB';
+    ctx.fillRect(TARGET_X - 14, CHILD_Y + 16, 28, 25);
+
+    const t = I18N[currentLang];
+    const pulse = Math.sin(Date.now()/150)*0.5 + 0.5;
+    ctx.fillStyle = `rgba(255,50,50,${pulse})`;
+    ctx.font = 'bold 20px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText(t.childHelp, TARGET_X, RESCUE_ZONE.top - 10);
+
+    ctx.strokeStyle = '#FFDBAC';
+    ctx.lineWidth = 6;
+    const waveAngle = Math.sin(Date.now()/120)*0.5;
+    ctx.beginPath(); ctx.moveTo(TARGET_X - 14, CHILD_Y + 20); ctx.lineTo(TARGET_X - 35 + Math.sin(waveAngle)*10, CHILD_Y); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(TARGET_X + 14, CHILD_Y + 20); ctx.lineTo(TARGET_X + 35 + Math.sin(waveAngle+Math.PI)*10, CHILD_Y); ctx.stroke();
+  }
+
+  function drawWater(){
+    const waterHeight = state.waterLvl * PPM;
+    const surfaceY = GROUND_Y - waterHeight;
+
+    const waterGrad = ctx.createLinearGradient(0, surfaceY, 0, GROUND_Y);
+    waterGrad.addColorStop(0, 'rgba(30,144,255,0.70)');
+    waterGrad.addColorStop(0.5, 'rgba(20,100,200,0.82)');
+    waterGrad.addColorStop(1, 'rgba(10,50,150,0.92)');
+
+    ctx.fillStyle = waterGrad;
+    ctx.beginPath();
+    ctx.moveTo(0, 700);
+    ctx.lineTo(0, surfaceY);
+
+    waveOffset += 0.08;
+    for(let x=0;x<=1200;x+=15){
+      const y = surfaceY + Math.sin(x*0.015 + waveOffset)*12 + Math.sin(x*0.03 + waveOffset*1.5)*5;
+      ctx.lineTo(x,y);
+    }
+    ctx.lineTo(1200,700);
+    ctx.fill();
+
+    ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    for(let x=0;x<=1200;x+=15){
+      const y = surfaceY + Math.sin(x*0.015 + waveOffset)*12;
+      if(x===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    }
+    ctx.stroke();
+  }
+
+  function drawRain(dt){
+    ctx.strokeStyle = 'rgba(200,220,255,0.52)';
+    ctx.lineWidth = 2;
+
+    for(const drop of raindrops){
+      drop.y += drop.speed * dt;
+      drop.x -= drop.speed * 0.1 * dt;
+
+      if(drop.y > 700){ drop.y = -20; drop.x = Math.random()*1300; }
+      if(drop.x < -20){ drop.x = 1220; }
+
+      ctx.beginPath();
+      ctx.moveTo(drop.x, drop.y);
+      ctx.lineTo(drop.x - 6, drop.y + drop.length);
+      ctx.stroke();
+    }
+  }
+
+  function drawHero(x,y){
+    ctx.save();
+    ctx.translate(x,y);
+
+    let rot = 0;
+    if(state.phase === 'swing' || state.phase === 'drag' || state.phase === 'swing_back'){
+      rot = -state.angle;
+    }
+    if(state.phase === 'jump'){
+      rot = Math.atan2(state.velocity.y, state.velocity.x) - Math.PI/2;
+    }
+    ctx.rotate(rot);
+
+    ctx.fillStyle = '#E74C3C';
+    ctx.fillRect(-12,-18,24,36);
+
+    ctx.fillStyle = '#FFDBAC';
+    ctx.beginPath(); ctx.arc(0,-25,14,0,Math.PI*2); ctx.fill();
+
+    ctx.fillStyle = '#FFD700';
+    ctx.beginPath(); ctx.arc(0,-28,14,Math.PI,2*Math.PI); ctx.fill();
+
+    ctx.strokeStyle = '#FFDBAC'; ctx.lineWidth = 6;
+    ctx.beginPath(); ctx.moveTo(-12,-12); ctx.lineTo(-24,0); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(12,-12); ctx.lineTo(24,0); ctx.stroke();
+
+    ctx.strokeStyle = '#3498DB';
+    ctx.beginPath(); ctx.moveTo(-6,18); ctx.lineTo(-6,35); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(6,18); ctx.lineTo(6,35); ctx.stroke();
+
+    ctx.restore();
+  }
+
+  function drawVectors(){
+    if(state.phase !== 'swing') return;
+    const vT = (ROPE_LEN * state.angVel);
+    if(Math.abs(vT) < 0.1) return;
+
+    const scale = 25;
+    const vx = vT * Math.cos(state.angle) * scale;
+    const vy = vT * -Math.sin(state.angle) * scale;
+
+    ctx.strokeStyle = '#00FF00';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(state.heroPos.x, state.heroPos.y);
+    ctx.lineTo(state.heroPos.x + vx, state.heroPos.y + vy);
+    ctx.stroke();
+
+    const arrowLen = 12;
+    const arrowAngle = Math.atan2(vy, vx);
+    ctx.beginPath();
+    ctx.moveTo(state.heroPos.x + vx, state.heroPos.y + vy);
+    ctx.lineTo(state.heroPos.x + vx - arrowLen*Math.cos(arrowAngle - 0.4), state.heroPos.y + vy - arrowLen*Math.sin(arrowAngle - 0.4));
+    ctx.lineTo(state.heroPos.x + vx - arrowLen*Math.cos(arrowAngle + 0.4), state.heroPos.y + vy - arrowLen*Math.sin(arrowAngle + 0.4));
+    ctx.closePath();
+    ctx.fillStyle = '#00FF00';
+    ctx.fill();
+
+    ctx.fillStyle = '#00FF00';
+    ctx.font = 'bold 12px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText(`v = ${Math.abs(vT).toFixed(1)} m/s`, state.heroPos.x + vx/2, state.heroPos.y + vy/2 - 10);
+  }
+
+  function drawAngleIndicator(){
+    if(state.phase !== 'drag') return;
+
+    const angleDeg = Math.abs(state.angle * 180 / Math.PI);
+    ctx.strokeStyle = 'rgba(255,215,0,0.82)';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    const arcRadius = 60;
+    const startAngle = -Math.PI/2;
+    const endAngle = -Math.PI/2 + state.angle;
+    ctx.arc(PIVOT.x, PIVOT.y, arcRadius, Math.min(startAngle,endAngle), Math.max(startAngle,endAngle));
+    ctx.stroke();
+
+    ctx.fillStyle = '#FFD700';
+    ctx.font = 'bold 22px Arial';
+    ctx.textAlign = 'center';
+    const textX = PIVOT.x + 100*Math.sin(state.angle/2);
+    const textY = PIVOT.y + 100*Math.cos(state.angle/2);
+    ctx.fillText(`θ = ${angleDeg.toFixed(1)}°`, textX, textY);
+
+    const theoreticalV = Math.sqrt(2 * state.eta * GRAVITY * ROPE_LEN * (1 - Math.cos(state.angle)));
+    ctx.font = '14px Arial';
+    ctx.fillStyle = '#4ECDC4';
+    ctx.fillText(`v_max ≈ ${theoreticalV.toFixed(2)} m/s`, textX, textY + 22);
+
+    if(angleDeg > 85){
+      ctx.fillStyle = '#FF6B6B';
+      ctx.font = 'bold 14px Arial';
+      ctx.fillText('⚠️', textX, textY + 42);
+    }
+  }
+
+  function drawOuch(){
+    if(!state.showOuch) return;
+    const t = I18N[currentLang];
+    ctx.fillStyle = '#FF6B6B';
+    ctx.font = 'bold 56px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText(t.ouchBig, 600, 200);
+    ctx.font = '26px Arial';
+    ctx.fillText(t.ouchSmall, 600, 250);
+  }
+
+  let waveOffset = 0;
+  let lastDt = 0.016;
+  function draw(dt){
+    lastDt = dt || lastDt;
+    ctx.clearRect(0,0,1200,700);
+
+    const sky = ctx.createLinearGradient(0,0,0,700);
+    sky.addColorStop(0, '#0a0a15');
+    sky.addColorStop(0.5,'#1a1a2e');
+    sky.addColorStop(1, '#2d2d44');
+    ctx.fillStyle = sky;
+    ctx.fillRect(0,0,1200,700);
+
+    if(!state.paused){
+      drawRain(lastDt);
+    }else{
+      ctx.strokeStyle = 'rgba(200,220,255,0.52)';
+      ctx.lineWidth = 2;
+      for(const drop of raindrops){
+        ctx.beginPath();
+        ctx.moveTo(drop.x, drop.y);
+        ctx.lineTo(drop.x - 6, drop.y + drop.length);
+        ctx.stroke();
+      }
+    }
+
+    if(state.lightningFlash > 0){
+      ctx.fillStyle = `rgba(255,255,255,${0.25 * state.lightningFlash})`;
+      ctx.fillRect(0,0,1200,420);
+    }
+
+    drawBuildings();
+    drawRescueOpening();
+    drawChild();
+    drawWater();
+
+    let ropeEndX, ropeEndY;
+    if(state.phase === 'jump'){
+      const returnAngle = state.angle * Math.exp(-state.t * 2);
+      ropeEndX = PIVOT.x + (ROPE_LEN*PPM) * Math.sin(returnAngle);
+      ropeEndY = PIVOT.y + (ROPE_LEN*PPM) * Math.cos(returnAngle);
+    }else{
+      ropeEndX = state.heroPos.x;
+      ropeEndY = state.heroPos.y;
+    }
+
+    ctx.strokeStyle = '#8B4513';
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.moveTo(PIVOT.x, PIVOT.y);
+    ctx.lineTo(ropeEndX, ropeEndY);
+    ctx.stroke();
+
+    ctx.fillStyle = '#555';
+    ctx.beginPath(); ctx.arc(PIVOT.x, PIVOT.y, 12, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#888';
+    ctx.beginPath(); ctx.arc(PIVOT.x, PIVOT.y, 6, 0, Math.PI*2); ctx.fill();
+
+    drawHero(state.heroPos.x, state.heroPos.y);
+
+    drawVectors();
+    drawAngleIndicator();
+
+    if(state.trail.length > 1){
+      ctx.lineWidth = 4;
+      ctx.setLineDash([8,4]);
+      for(let i=1;i<state.trail.length;i++){
+        const age = state.t - state.trail[i].time;
+        const alpha = Math.max(0, 1 - age/3);
+        ctx.strokeStyle = `rgba(255,215,0,${alpha*0.8})`;
+        ctx.beginPath();
+        ctx.moveTo(state.trail[i-1].x, state.trail[i-1].y);
+        ctx.lineTo(state.trail[i].x, state.trail[i].y);
+        ctx.stroke();
+      }
+      ctx.setLineDash([]);
+    }
+
+    drawOuch();
+
+    if(state.paused){
+      ctx.fillStyle = 'rgba(0,0,0,0.45)';
+      ctx.fillRect(0,0,1200,700);
+    }
+  }
+
+  /* ---------- Main loop ---------- */
+  let lastTime = 0;
+  function loop(now){
+    if(state.paused){
+      draw(0.016);
+      return;
+    }
+    const dt = Math.min((now - lastTime)/1000, 0.1);
+    lastTime = now;
+
+    update(dt);
+    draw(dt);
+
+    if(state.phase !== 'end'){
+      requestAnimationFrame(loop);
+    }
+  }
+
+  /* ---------- End screen ---------- */
+  function gameOver(success, result=''){
+    state.phase = 'end';
+    state.win = success;
+
+    const endScreen = qs('endScreen');
+    const title = qs('endTitle');
+    const medal = qs('endMedal');
+    const msg = qs('endMessage');
+    const t = I18N[currentLang];
+
+    endScreen.classList.remove('hidden');
+
+    if(success){
+      let medalEmoji='🥉', medalClass='medal-bronze', medalText=t.medalBronze, titleText=t.endOk;
+      if(result==='gold'){ medalEmoji='🥇'; medalClass='medal-gold'; medalText=t.medalGold; titleText=t.endPerfect; }
+      if(result==='silver'){ medalEmoji='🥈'; medalClass='medal-silver'; medalText=t.medalSilver; titleText=t.endGreat; }
+
+      title.textContent = titleText;
+      title.style.color = "#4ECDC4";
+      medal.textContent = medalEmoji;
+      medal.className = 'medal ' + medalClass;
+
+      const theoreticalV = Math.sqrt(2 * state.eta * GRAVITY * ROPE_LEN * (1 - Math.cos(state.initialAngle)));
+      const finalScore = computeScore(result);
+      const cfg = state.runConfig || { lang: currentLang, mode: state.mode, window: selectedWindow, eta: state.eta };
+      const lossPct = Math.max(0, Math.min(100, Math.round((1 - (cfg.eta ?? state.eta)) * 100)));
+      const cfgEta = ((cfg.eta ?? state.eta)).toFixed(2);
+      const windowLabel = (cfg.window === 'small') ? t.winSmall : (cfg.window === 'third') ? t.winThird : t.winNormal;
+      const modeLabel = (cfg.mode === 'auto') ? t.modeAuto : t.modeManual;
+
+
+      msg.innerHTML = `
+        <p style="font-size:20px; color:var(--gold);"><strong>${medalText}</strong></p>
+        <div style="margin:16px 0;">
+          <span class="success-stat">${t.statsAttempts}: ${state.attempts + 1}</span>
+          <span class="success-stat">${t.statsTime}: ${Math.floor(state.t/60)}:${Math.floor(state.t%60).toString().padStart(2,'0')}</span>
+          <span class="success-stat">${t.statsWater}: ${state.waterLvl.toFixed(2)} m</span>
+        </div>
+        <div class="modal-section" style="text-align:left;">
+          <h4>${t.physicsAnalysis}</h4>
+          <p style="font-size:12px; margin:0;">
+            ${t.a0}: <strong>${(state.initialAngle * 180/Math.PI).toFixed(1)}°</strong><br>
+            ${t.eta}: <strong>${state.eta.toFixed(2)}</strong> (${((1-state.eta)*100).toFixed(0)}%)<br>
+            ${t.theoV}: <strong>${theoreticalV.toFixed(2)} m/s</strong><br>
+            ${state.releaseAngle !== null ? `${t.relAngle}: <strong>${(state.releaseAngle * 180/Math.PI).toFixed(1)}°</strong><br>` : ''}
+            <br><strong>${t.scoreFinal}: <span style="color:var(--gold); font-size:18px;">${finalScore}/100</span></strong>
+          </p>
+        </div>
+        <div class="modal-section" style="text-align:left;">
+          <h4>${t.settingsHdr}</h4>
+          <p style="font-size:12px; margin:0;">
+            ${t.settingsLoss}: <strong>${lossPct}%</strong> (η = <strong>${cfgEta}</strong>)<br>
+            ${t.settingsWindow}: <strong>${windowLabel}</strong><br>
+            ${t.settingsMode}: <strong>${modeLabel}</strong>
+          </p>
+        </div>
+      `;
+    }else{
+      title.textContent = t.endFail;
+      title.style.color = "#FF6B6B";
+      medal.textContent = "💔";
+      medal.className = 'medal';
+
+      const cfg = state.runConfig || { lang: currentLang, mode: state.mode, window: selectedWindow, eta: state.eta };
+      const lossPct = Math.max(0, Math.min(100, Math.round((1 - (cfg.eta ?? state.eta)) * 100)));
+      const cfgEta = ((cfg.eta ?? state.eta)).toFixed(2);
+      const windowLabel = (cfg.window === 'small') ? t.winSmall : (cfg.window === 'third') ? t.winThird : t.winNormal;
+      const modeLabel = (cfg.mode === 'auto') ? t.modeAuto : t.modeManual;
+
+
+      msg.innerHTML = `
+        <p style="font-size:18px;">${t.failMsg1}</p>
+        <p>${t.failMsg2}</p>
+        <p><strong>${t.statsAttempts}:</strong> ${state.attempts}</p>
+        <div class="modal-section" style="text-align:left;">
+          <h4>${t.tipHdr}</h4>
+          <p style="font-size:12px; margin:0;">${t.tipBody.replace("{eta}", state.eta.toFixed(2))}</p>
+        </div>
+        <div class="modal-section" style="text-align:left;">
+          <h4>${t.settingsHdr}</h4>
+          <p style="font-size:12px; margin:0;">
+            ${t.settingsLoss}: <strong>${lossPct}%</strong> (η = <strong>${cfgEta}</strong>)<br>
+            ${t.settingsWindow}: <strong>${windowLabel}</strong><br>
+            ${t.settingsMode}: <strong>${modeLabel}</strong>
+          </p>
+        </div>
+
+      `;
+    }
+  }
+
+  /* ---------- Input (Pointer events) ---------- */
+  let dragging = false;
+
+  canvas.addEventListener('pointerdown', (e)=>{
+    if(state.phase !== 'idle' && state.phase !== 'swing' && state.phase !== 'swing_back') return;
+    if(state.paused) return;
+
+    initAudio();
+    canvas.setPointerCapture(e.pointerId);
+    dragging = true;
+
+    const p = getPointerPos(e);
+    const dx = p.x - PIVOT.x;
+    const dy = p.y - PIVOT.y;
+
+    state.angle = Math.atan2(dx, dy);
+    state.heroPos.x = PIVOT.x + ROPE_LEN*PPM*Math.sin(state.angle);
+    state.heroPos.y = PIVOT.y + ROPE_LEN*PPM*Math.cos(state.angle);
+    state.angVel = 0;
+    state.phase = 'drag';
+    state.trail = [];
+
+    qs('angleDisplay').textContent = (state.angle * 180/Math.PI).toFixed(1) + '°';
+  });
+
+  canvas.addEventListener('pointermove', (e)=>{
+    if(!dragging) return;
+    if(state.phase !== 'drag') return;
+
+    const p = getPointerPos(e);
+    const dx = p.x - PIVOT.x;
+    const dy = p.y - PIVOT.y;
+
+    state.angle = Math.atan2(dx, dy);
+    state.heroPos.x = PIVOT.x + ROPE_LEN*PPM*Math.sin(state.angle);
+    state.heroPos.y = PIVOT.y + ROPE_LEN*PPM*Math.cos(state.angle);
+
+    qs('angleDisplay').textContent = (state.angle * 180/Math.PI).toFixed(1) + '°';
+  });
+
+  canvas.addEventListener('pointerup', ()=>{
+    if(!dragging) return;
+    dragging = false;
+    if(state.phase === 'drag'){
+      state.phase = 'swing';
+      state.initialAngle = state.angle;
+      state.angVel = 0;
+    }
+  });
+
+  canvas.addEventListener('pointercancel', ()=>{
+    dragging = false;
+    if(state.phase === 'drag'){
+      state.phase = 'swing';
+      state.initialAngle = state.angle;
+      state.angVel = 0;
+    }
+  });
+
+  window.addEventListener('keydown', (e)=>{
+    if(e.code === 'KeyP'){
+      e.preventDefault(); togglePause(); return;
+    }
+    if(state.paused) return;
+
+    if(e.code === 'Space'){
+      e.preventDefault();
+      if(state.mode !== 'auto') tryRelease();
+    }
+    if(e.code === 'KeyR'){
+      resetHard();
+    }
+  });
+
+});
+</script>
+</body>
+</html>
