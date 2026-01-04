@@ -50,7 +50,7 @@ No registration. No download. Just click and play!
 - **Physics jokes & Easter eggs** hidden throughout!
 
 ### 🌍 Accessibility
-- **3 Languages**: 🇬🇷 Greek | 🇬🇧 English | 🇮🇹 Italian
+- **5 Languages**: 🇬🇷 Greek | 🇬🇧 English | 🇮🇹 Italian | ES Spanish |BG Bu;garian 
 - **Responsive design**: Works on desktop, tablet, and mobile
 - **Touch & keyboard controls**
 - **No external dependencies** - Pure HTML/CSS/JS
