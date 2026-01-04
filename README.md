@@ -50,7 +50,7 @@ No registration. No download. Just click and play!
 - **Physics jokes & Easter eggs** hidden throughout!
 
 ### 🌍 Accessibility
-- **5 Languages**: 🇬🇷 Greek | 🇬🇧 English | 🇮🇹 Italian | ES Spanish |BG Bu;garian 
+- **5 Languages**: 🇬🇷 Greek | 🇬🇧 English | 🇮🇹 Italian | ES Spanish | BG Bu;garian 
 - **Responsive design**: Works on desktop, tablet, and mobile
 - **Touch & keyboard controls**
 - **No external dependencies** - Pure HTML/CSS/JS
@@ -155,7 +155,7 @@ Contributions are welcome! Ideas for new games:
 1. Fork the repository
 2. Create a new game following the single-file HTML pattern
 3. Ensure physics accuracy (this is non-negotiable!)
-4. Add all 3 languages (EL, EN, IT)
+4. Add all 5 languages (EL, EN, IT, ES, BG)
 5. Submit a pull request
 
 ### Game Requirements
